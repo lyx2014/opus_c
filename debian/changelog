@@ -1,3 +1,9 @@
+opus (0.9.8-1) experimental; urgency=low
+
+  * Opus draft-10 release testing.
+
+ -- Ron Lee <ron@debian.org>  Wed, 02 Nov 2011 22:55:51 +1030
+
 opus (0.9.4-1) experimental; urgency=low
 
   * Initial (re)release as Opus.  Closes: #610980
