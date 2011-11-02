@@ -58,3 +58,11 @@ Description: The Opus codec library development files
  .
  This package provides the Opus library headers and development files.
 
+Package: libopus-dbg
+Section: debug
+Priority: extra
+Architecture: any
+Depends: libopus0 (= ${binary:Version})
+Description: debugging symbols for libopus
+ This package provides the detached debug symbols for libopus.
+
