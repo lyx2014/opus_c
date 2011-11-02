@@ -1,3 +1,4 @@
-src/opus_decoder.h
-src/opus_encoder.h
-src/opus.h
+OPUS_HEAD = \
+include/opus.h \
+include/opus_multistream.h \
+src/opus_private.h

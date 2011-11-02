@@ -1,26 +1,26 @@
-silk/SKP_debug.h
-silk/SKP_Silk_control.h
-silk/SKP_Silk_errors.h
-silk/SKP_Silk_SDK_API.h
-silk/SKP_Silk_typedef.h
-silk/SKP_Silk_define.h
-silk/SKP_Silk_main.h
-silk/SKP_Silk_PLC.h
-silk/SKP_Silk_structs.h
-silk/SKP_Silk_tables.h
-silk/SKP_Silk_tuning_parameters.h
-silk/SKP_Silk_main_FIX.h
-silk/SKP_Silk_structs_FIX.h
-silk/SKP_Silk_assembler_FLP.h
-silk/SKP_Silk_main_FLP.h
-silk/SKP_Silk_structs_FLP.h
-silk/SKP_Silk_Inlines.h
-silk/SKP_Silk_MacroCount.h
-silk/SKP_Silk_MacroDebug.h
-silk/SKP_Silk_macros.h
-silk/SKP_Silk_pitch_est_defines.h
-silk/SKP_Silk_resampler_private.h
-silk/SKP_Silk_resampler_rom.h
-silk/SKP_Silk_resampler_structs.h
-silk/SKP_Silk_SigProc_FIX.h
-silk/SKP_Silk_SigProc_FLP.h
+SILK_HEAD = \
+silk/debug.h \
+silk/control.h \
+silk/errors.h \
+silk/API.h \
+silk/typedef.h \
+silk/define.h \
+silk/main.h \
+silk/PLC.h \
+silk/structs.h \
+silk/tables.h \
+silk/tuning_parameters.h \
+silk/Inlines.h \
+silk/MacroCount.h \
+silk/MacroDebug.h \
+silk/macros.h \
+silk/pitch_est_defines.h \
+silk/resampler_private.h \
+silk/resampler_rom.h \
+silk/resampler_structs.h \
+silk/SigProc_FIX.h \
+silk/fixed/main_FIX.h \
+silk/fixed/structs_FIX.h \
+silk/float/main_FLP.h \
+silk/float/structs_FLP.h \
+silk/float/SigProc_FLP.h
