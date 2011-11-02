@@ -9,9 +9,6 @@
 /* Assertions */
 #undef ENABLE_ASSERTIONS
 
-/* Postfilter */
-#undef ENABLE_POSTFILTER
-
 /* Debug fixed-point implementation */
 #undef FIXED_DEBUG
 
@@ -24,6 +21,9 @@
 /* Float approximations */
 #undef FLOAT_APPROX
 
+/* Fuzzing */
+#undef FUZZING
+
 /* Define to 1 if you have the <alloca.h> header file. */
 #undef HAVE_ALLOCA_H
 
@@ -33,17 +33,11 @@
 /* Define to 1 if you have the <getopt.h> header file. */
 #undef HAVE_GETOPT_H
 
-/* Define to 1 if you have the `getopt_long' function. */
-#undef HAVE_GETOPT_LONG
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
-
-/* Define to 1 if you have the `winmm' library (-lwinmm). */
-#undef HAVE_LIBWINMM
 
 /* Define to 1 if you have the `lrint' function. */
 #undef HAVE_LRINT
@@ -66,12 +60,6 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the <sys/audioio.h> header file. */
-#undef HAVE_SYS_AUDIOIO_H
-
-/* Define to 1 if you have the <sys/soundcard.h> header file. */
-#undef HAVE_SYS_SOUNDCARD_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -81,9 +69,15 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
+/* Define to 1 if you have the `__malloc_hook' function. */
+#undef HAVE___MALLOC_HOOK
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
+
+/* Define to 1 if your C compiler doesn't accept -c and -o together. */
+#undef NO_MINUS_C_MINUS_O
 
 /* We're part of Opus */
 #undef OPUS_BUILD
