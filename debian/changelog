@@ -1,3 +1,10 @@
+opus (0.9.14+20120521-1) unstable; urgency=low
+
+  * Opus draft-14 release testing.
+  * This one's for Sid.  Closes: #610980
+
+ -- Ron Lee <ron@debian.org>  Mon, 21 May 2012 06:24:33 +0930
+
 opus (0.9.8-1) experimental; urgency=low
 
   * Opus draft-10 release testing.
