@@ -40,10 +40,10 @@ host_triplet = @host@
 DIST_COMMON = README $(am__configure_deps) \
 	$(am__pkginclude_HEADERS_DIST) $(noinst_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
-	$(srcdir)/celt_headers.txt $(srcdir)/celt_sources.mk \
+	$(srcdir)/celt_headers.mk $(srcdir)/celt_sources.mk \
 	$(srcdir)/config.h.in $(srcdir)/opus-uninstalled.pc.in \
-	$(srcdir)/opus.pc.in $(srcdir)/opus_headers.txt \
-	$(srcdir)/opus_sources.mk $(srcdir)/silk_headers.txt \
+	$(srcdir)/opus.pc.in $(srcdir)/opus_headers.mk \
+	$(srcdir)/opus_sources.mk $(srcdir)/silk_headers.mk \
 	$(srcdir)/silk_sources.mk $(top_srcdir)/configure AUTHORS \
 	COPYING ChangeLog INSTALL NEWS compile config.guess config.sub \
 	depcomp install-sh ltmain.sh missing
@@ -479,8 +479,8 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBM = @LIBM@
 LIBOBJS = @LIBOBJS@
-LIBOPUS_SUFFIX = @LIBOPUS_SUFFIX@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
@@ -693,6 +693,7 @@ celt/bands.h \
 celt/celt.h \
 include/opus_types.h \
 include/opus_defines.h \
+include/opus_custom.h \
 celt/cwrs.h \
 celt/ecintrin.h \
 celt/entcode.h \
@@ -794,7 +795,7 @@ all: config.h
 .SUFFIXES: .c .lo .o .obj
 am--refresh:
 	@:
-$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/celt_sources.mk $(srcdir)/silk_sources.mk $(srcdir)/opus_sources.mk $(srcdir)/celt_headers.txt $(srcdir)/silk_headers.txt $(srcdir)/opus_headers.txt $(am__configure_deps)
+$(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am $(srcdir)/celt_sources.mk $(srcdir)/silk_sources.mk $(srcdir)/opus_sources.mk $(srcdir)/celt_headers.mk $(srcdir)/silk_headers.mk $(srcdir)/opus_headers.mk $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
