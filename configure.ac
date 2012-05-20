@@ -9,7 +9,7 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
 OPUS_MAJOR_VERSION=0
 OPUS_MINOR_VERSION=9
-OPUS_MICRO_VERSION=8
+OPUS_MICRO_VERSION=14
 OPUS_EXTRA_VERSION=
 
 OPUS_VERSION="$OPUS_MAJOR_VERSION.$OPUS_MINOR_VERSION.$OPUS_MICRO_VERSION$OPUS_EXTRA_VERSION"
@@ -22,8 +22,21 @@ else
   OPUS_VERSION="$GIT_VERSION"
 fi
 
-LIBOPUS_SUFFIX=0
+# For automake.
+VERSION=$OPUS_VERSION
+PACKAGE=opus
 
+# For our version string.
+AC_SUBST(OPUS_VERSION)
+
+# For config.h
+AC_DEFINE_UNQUOTED(OPUS_VERSION, "${OPUS_VERSION}", [Complete version string])
+AC_DEFINE_UNQUOTED(OPUS_MAJOR_VERSION, ${OPUS_MAJOR_VERSION}, [Version major])
+AC_DEFINE_UNQUOTED(OPUS_MINOR_VERSION, ${OPUS_MINOR_VERSION}, [Version minor])
+AC_DEFINE_UNQUOTED(OPUS_MICRO_VERSION, ${OPUS_MICRO_VERSION}, [Version micro])
+AC_DEFINE_UNQUOTED(OPUS_EXTRA_VERSION, "${OPUS_EXTRA_VERSION}", [Version extra])
+
+# For libtool.
 OPUS_LT_CURRENT=0
 OPUS_LT_REVISION=0
 OPUS_LT_AGE=0
@@ -31,14 +44,6 @@ OPUS_LT_AGE=0
 AC_SUBST(OPUS_LT_CURRENT)
 AC_SUBST(OPUS_LT_REVISION)
 AC_SUBST(OPUS_LT_AGE)
-AC_SUBST(LIBOPUS_SUFFIX)
-
-# For automake.
-VERSION=$OPUS_VERSION
-PACKAGE=opus
-
-# For our version string
-AC_SUBST(OPUS_VERSION)
 
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 AM_MAINTAINER_MODE
@@ -51,15 +56,50 @@ AC_PROG_CC_C99
 AC_C_BIGENDIAN
 AC_C_CONST
 AC_C_INLINE
-AC_C_RESTRICT
+
+#Use a hacked up version of autoconf's AC_C_RESTRICT because it's not
+#strong enough a test to detect old buggy versions of GCC (e.g. 2.95.3)
+AC_CACHE_CHECK([for C/C++ restrict keyword], ac_cv_c_restrict,
+  [ac_cv_c_restrict=no
+   # The order here caters to the fact that C++ does not require restrict.
+   for ac_kw in __restrict __restrict__ _Restrict restrict; do
+     AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+      [[typedef int * int_ptr;
+	int foo (int_ptr $ac_kw ip, int * $ac_kw baz[]) {
+	return ip[0];
+       }]],
+      [[int s[1];
+	int * $ac_kw t = s;
+	t[0] = 0;
+	return foo(t, (void *)0)]])],
+      [ac_cv_c_restrict=$ac_kw])
+     test "$ac_cv_c_restrict" != no && break
+   done
+  ])
+ AH_VERBATIM([restrict],
+[/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+#undef restrict
+/* Work around a bug in Sun C++: it does not support _Restrict or
+   __restrict__, even though the corresponding Sun C compiler ends up with
+   "#define restrict _Restrict" or "#define restrict __restrict__" in the
+   previous line.  Perhaps some future version of Sun C++ will work with
+   restrict; if so, hopefully it defines __RESTRICT like Sun C does.  */
+#if defined __SUNPRO_CC && !defined __RESTRICT
+# define _Restrict
+# define __restrict__
+#endif])
+ case $ac_cv_c_restrict in
+   restrict) ;;
+   no) AC_DEFINE([restrict], []) ;;
+   *)  AC_DEFINE_UNQUOTED([restrict], [$ac_cv_c_restrict]) ;;
+ esac
 
 AC_DEFINE([OPUS_BUILD], [], [This is a build of OPUS])
 
 AC_MSG_CHECKING(for C99 variable-size arrays)
-AC_TRY_COMPILE( , [
-int foo=10;
-int array[foo];
-],
+AC_TRY_COMPILE( [], [static int x; char a[++x]; a[sizeof a - 1] = 0; int N; return a[0];],
 [has_var_arrays=yes;AC_DEFINE([VAR_ARRAYS], [], [Use C99 variable-size arrays])
 ],
 has_var_arrays=no
@@ -82,13 +122,11 @@ has_alloca=no
 )
 AC_MSG_RESULT($has_alloca)
 
-AC_CHECK_LIB(m, sin)
-
-AC_DEFINE_UNQUOTED(OPUS_VERSION, "${OPUS_VERSION}", [Complete version string])
-AC_DEFINE_UNQUOTED(OPUS_MAJOR_VERSION, ${OPUS_MAJOR_VERSION}, [Version major])
-AC_DEFINE_UNQUOTED(OPUS_MINOR_VERSION, ${OPUS_MINOR_VERSION}, [Version minor])
-AC_DEFINE_UNQUOTED(OPUS_MICRO_VERSION, ${OPUS_MICRO_VERSION}, [Version micro])
-AC_DEFINE_UNQUOTED(OPUS_EXTRA_VERSION, "${OPUS_EXTRA_VERSION}", [Version extra])
+AC_CHECK_FUNC(exp,[fp_libm_not_needed=yes;LIBM=],[fp_libm_not_needed=dunno])
+if test x"$fp_libm_not_needed" = xdunno; then
+  AC_CHECK_LIB([m], [exp], [LIBS="-lm $LIBS"; LIBM="-lm"],[LIBM=])
+fi
+AC_SUBST([LIBM])
 
 has_float_approx=no
 #case "$host_cpu" in
@@ -159,29 +197,37 @@ if test "$HAVE_DOXYGEN" != "yes" -o "$ac_enable_doc" != "yes"; then
 fi
 AM_CONDITIONAL(HAVE_DOXYGEN, [test $HAVE_DOXYGEN = yes])
 
-if test "$OPUS_BUILD" != "true" ; then
 saved_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -fvisibility=hidden"
 AC_MSG_CHECKING([if ${CC} supports -fvisibility=hidden])
-AC_COMPILE_IFELSE([char foo;],
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([char foo;])],
       [ AC_MSG_RESULT([yes])
         SYMBOL_VISIBILITY="-fvisibility=hidden" ],
         AC_MSG_RESULT([no]))
 CFLAGS="$saved_CFLAGS $SYMBOL_VISIBILITY"
 AC_SUBST(SYMBOL_VISIBILITY)
+
+if test $ac_cv_c_compiler_gnu = yes ; then
 saved_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -fstack-protector-all"
 AC_MSG_CHECKING([if ${CC} supports -fstack-protector-all])
-AC_COMPILE_IFELSE([char foo;],
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([char foo;])],
       [ AC_MSG_RESULT([yes])
         STACK_PROTECTOR="-fstack-protector-all" ],
         AC_MSG_RESULT([no]))
 CFLAGS="$saved_CFLAGS $STACK_PROTECTOR"
 fi
 
-if test $ac_cv_c_compiler_gnu = yes ; then
-        CFLAGS="$CFLAGS -W -Wstrict-prototypes -Wall -Wextra -Wcast-align -Wnested-externs -Wshadow"
-fi
+CFLAGS="$CFLAGS -W"
+
+saved_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS -Wall -Wextra -Wcast-align -Wnested-externs -Wshadow -Wstrict-prototypes"
+AC_MSG_CHECKING([if ${CC} supports -Wall -Wextra -Wcast-align -Wnested-externs -Wshadow -Wstrict-prototypes])
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([char foo;])],
+      [ AC_MSG_RESULT([yes])
+        EXTRA_WARNS="-Wall -Wextra -Wcast-align -Wnested-externs -Wshadow -Wstrict-prototypes" ],
+        AC_MSG_RESULT([no]))
+CFLAGS="$saved_CFLAGS $EXTRA_WARNS"
 
 AC_CHECK_FUNCS([lrintf])
 AC_CHECK_FUNCS([lrint])
@@ -220,10 +266,6 @@ fi
 
 AC_SUBST(SIZE16)
 AC_SUBST(SIZE32)
-
-if test "$OPUS_BUILD" = "true" ; then
-AC_DEFINE(OPUS_BUILD, [], [We're part of Opus])
-fi
 
 AM_CONDITIONAL([FIXED_POINT], [test x$ac_enable_fixed = xyes])
 AM_CONDITIONAL([CUSTOM_MODES], [test x$ac_enable_custom_modes = xyes])

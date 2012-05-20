@@ -15,8 +15,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -113,14 +113,14 @@ extern "C" {
 /** @endcond */
 
 /** @defgroup ctlvalues Pre-defined values for CTL interface
-  * @see genericctls,encoderctls
+  * @see genericctls, encoderctls
   * @{
   */
 /* Values for the various encoder CTLs */
 #define OPUS_AUTO                           -1000 /**<Auto/default setting @hideinitializer*/
 #define OPUS_BITRATE_MAX                       -1 /**<Maximum bitrate @hideinitializer*/
 
-/** Best for "standard" VoIP/videoconference applications where listening quality and intelligibility matter most
+/** Best for most VoIP/videoconference applications where listening quality and intelligibility matter most
  * @hideinitializer */
 #define OPUS_APPLICATION_VOIP                2048
 /** Best for broadcast/high-fidelity application where the decoded audio should be as close as possible to the input
@@ -142,7 +142,26 @@ extern "C" {
 
 
 /** @defgroup encoderctls Encoder related CTLs
-  * @see genericctls,opusencoder
+  *
+  * These are convenience macros for use with the \c opus_encode_ctl
+  * interface. They are used to generate the appropriate series of
+  * arguments for that call, passing the correct type, size and so
+  * on as expected for each particular request.
+  *
+  * Some usage examples:
+  *
+  * @code
+  * int ret;
+  * ret = opus_encoder_ctl(enc_ctx, OPUS_SET_BANDWIDTH(OPUS_AUTO));
+  * if (ret != OPUS_OK) return ret;
+  *
+  * int rate;
+  * opus_encoder_ctl(enc_ctx, OPUS_GET_BANDWIDTH(&rate));
+  *
+  * opus_encoder_ctl(enc_ctx, OPUS_RESET_STATE);
+  * @endcode
+  *
+  * @see genericctls, opusencoder
   * @{
   */
 
@@ -152,7 +171,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   0-10, inclusive
   * @hideinitializer */
 #define OPUS_SET_COMPLEXITY(x) OPUS_SET_COMPLEXITY_REQUEST, __opus_check_int(x)
-/** Gets the encoder's complexity configuration, @see OPUS_SET_COMPLEXITY
+/** Gets the encoder's complexity configuration. @see OPUS_SET_COMPLEXITY
   * @param[out] x <tt>int*</tt>: 0-10, inclusive
   * @hideinitializer */
 #define OPUS_GET_COMPLEXITY(x) OPUS_GET_COMPLEXITY_REQUEST, __opus_check_int_ptr(x)
@@ -166,7 +185,7 @@ extern "C" {
   * @param[in] x <tt>opus_int32</tt>:   bitrate in bits per second.
   * @hideinitializer */
 #define OPUS_SET_BITRATE(x) OPUS_SET_BITRATE_REQUEST, __opus_check_int(x)
-/** Gets the encoder's bitrate configuration, @see OPUS_SET_BITRATE
+/** Gets the encoder's bitrate configuration. @see OPUS_SET_BITRATE
   * @param[out] x <tt>opus_int32*</tt>: bitrate in bits per second.
   * @hideinitializer */
 #define OPUS_GET_BITRATE(x) OPUS_GET_BITRATE_REQUEST, __opus_check_int_ptr(x)
@@ -181,7 +200,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   0; 1 (default)
   * @hideinitializer */
 #define OPUS_SET_VBR(x) OPUS_SET_VBR_REQUEST, __opus_check_int(x)
-/** Gets the encoder's VBR configuration, @see OPUS_SET_VBR
+/** Gets the encoder's VBR configuration. @see OPUS_SET_VBR
   * @param[out] x <tt>int*</tt>: 0; 1
   * @hideinitializer */
 #define OPUS_GET_VBR(x) OPUS_GET_VBR_REQUEST, __opus_check_int_ptr(x)
@@ -209,12 +228,12 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   OPUS_AUTO (default); 1 (forced mono); 2 (forced stereo)
   * @hideinitializer */
 #define OPUS_SET_FORCE_CHANNELS(x) OPUS_SET_FORCE_CHANNELS_REQUEST, __opus_check_int(x)
-/** Gets the encoder's forced channel configuration, @see OPUS_SET_FORCE_CHANNELS
+/** Gets the encoder's forced channel configuration. @see OPUS_SET_FORCE_CHANNELS
   * @param[out] x <tt>int*</tt>: OPUS_AUTO; 0; 1
   * @hideinitializer */
 #define OPUS_GET_FORCE_CHANNELS(x) OPUS_GET_FORCE_CHANNELS_REQUEST, __opus_check_int_ptr(x)
 
-/** Configures the encoder's maximum bandpass allowed, @see OPUS_GET_MAX_BANDWIDTH
+/** Configures the encoder's maximum bandpass allowed. @see OPUS_GET_MAX_BANDWIDTH
   * The supported values are:
   *  - OPUS_BANDWIDTH_NARROWBAND     4kHz passband
   *  - OPUS_BANDWIDTH_MEDIUMBAND     6kHz passband
@@ -225,12 +244,12 @@ extern "C" {
   * @hideinitializer */
 #define OPUS_SET_MAX_BANDWIDTH(x) OPUS_SET_MAX_BANDWIDTH_REQUEST, __opus_check_int(x)
 
-/** Gets the encoder's configured maximum bandpass allowed, @see OPUS_SET_MAX_BANDWIDTH
+/** Gets the encoder's configured maximum bandpass allowed. @see OPUS_SET_MAX_BANDWIDTH
   * @param[out] x <tt>int*</tt>: Bandwidth value
   * @hideinitializer */
 #define OPUS_GET_MAX_BANDWIDTH(x) OPUS_GET_MAX_BANDWIDTH_REQUEST, __opus_check_int_ptr(x)
 
-/** Configures the encoder's bandpass, @see OPUS_GET_BANDWIDTH
+/** Configures the encoder's bandpass. @see OPUS_GET_BANDWIDTH
   * The supported values are:
   *  - OPUS_AUTO (default)
   *  - OPUS_BANDWIDTH_NARROWBAND     4kHz passband
@@ -251,7 +270,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   Signal type
   * @hideinitializer */
 #define OPUS_SET_SIGNAL(x) OPUS_SET_SIGNAL_REQUEST, __opus_check_int(x)
-/** Gets the encoder's configured signal type, @see OPUS_SET_SIGNAL
+/** Gets the encoder's configured signal type. @see OPUS_SET_SIGNAL
   *
   * @param[out] x <tt>int*</tt>: Signal type
   * @hideinitializer */
@@ -263,10 +282,12 @@ extern "C" {
   * The supported values are:
   *  - OPUS_APPLICATION_VOIP Process signal for improved speech intelligibility
   *  - OPUS_APPLICATION_AUDIO Favor faithfulness to the original input
+  *  - OPUS_APPLICATION_RESTRICTED_LOWDELAY Configure the minimum possible coding delay
+  *
   * @param[in] x <tt>int</tt>:     Application value
   * @hideinitializer */
 #define OPUS_SET_APPLICATION(x) OPUS_SET_APPLICATION_REQUEST, __opus_check_int(x)
-/** Gets the encoder's configured application, @see OPUS_SET_APPLICATION
+/** Gets the encoder's configured application. @see OPUS_SET_APPLICATION
   *
   * @param[out] x <tt>int*</tt>:   Application value
   * @hideinitializer */
@@ -293,7 +314,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   FEC flag, 0 (disabled) is default
   * @hideinitializer */
 #define OPUS_SET_INBAND_FEC(x) OPUS_SET_INBAND_FEC_REQUEST, __opus_check_int(x)
-/** Gets encoder's configured use of inband forward error correction, @see OPUS_SET_INBAND_FEC
+/** Gets encoder's configured use of inband forward error correction. @see OPUS_SET_INBAND_FEC
   *
   * @param[out] x <tt>int*</tt>: FEC flag
   * @hideinitializer */
@@ -307,7 +328,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   Loss percentage in the range 0-100, inclusive.
   * @hideinitializer */
 #define OPUS_SET_PACKET_LOSS_PERC(x) OPUS_SET_PACKET_LOSS_PERC_REQUEST, __opus_check_int(x)
-/** Gets the encoder's configured packet loss percentage, @see OPUS_SET_PACKET_LOSS_PERC
+/** Gets the encoder's configured packet loss percentage. @see OPUS_SET_PACKET_LOSS_PERC
   *
   * @param[out] x <tt>int*</tt>: Loss percentage in the range 0-100, inclusive.
   * @hideinitializer */
@@ -319,7 +340,7 @@ extern "C" {
   * @param[in] x <tt>int</tt>:   DTX flag, 0 (disabled) is default
   * @hideinitializer */
 #define OPUS_SET_DTX(x) OPUS_SET_DTX_REQUEST, __opus_check_int(x)
-/** Gets encoder's configured use of discontinuous transmission, @see OPUS_SET_DTX
+/** Gets encoder's configured use of discontinuous transmission. @see OPUS_SET_DTX
   *
   * @param[out] x <tt>int*</tt>:  DTX flag
   * @hideinitializer */
@@ -327,7 +348,36 @@ extern "C" {
 /**@}*/
 
 /** @defgroup genericctls Generic CTLs
-  * @see opus_encoder_ctl,opusencoder,opusdecoder
+  *
+  * These macros are used with the \c opus_decoder_ctl and
+  * \c opus_encoder_ctl calls to generate a particular
+  * request.
+  *
+  * When called on an \c OpusDecoder they apply to that
+  * particular decoder instance. When called on an
+  * \c OpusEncoder they apply to the corresponding setting
+  * on that encoder instance, if present.
+  *
+  * Some usage examples:
+  *
+  * @code
+  * int ret;
+  * opus_int32 pitch;
+  * ret = opus_decoder_ctl(dec_ctx, OPUS_GET_PITCH(&pitch));
+  * if (ret == OPUS_OK) return ret;
+  *
+  * opus_encoder_ctl(enc_ctx, OPUS_RESET_STATE);
+  * opus_decoder_ctl(dec_ctx, OPUS_RESET_STATE);
+  *
+  * opus_int32 enc_bw, dec_bw;
+  * opus_encoder_ctl(enc_ctx, OPUS_GET_BANDWIDTH(&enc_bw));
+  * opus_decoder_ctl(dec_ctx, OPUS_GET_BANDWIDTH(&dec_bw));
+  * if (enc_bw != dec_bw) {
+  *   printf("packet bandwidth mismatch!\n");
+  * }
+  * @endcode
+  *
+  * @see opusencoder, opus_decoder_ctl, opus_encoder_ctl
   * @{
   */
 
@@ -353,12 +403,14 @@ extern "C" {
   * e.g. time stretching/shortening. If the last frame was not voiced, or if the
   * pitch was not coded in the frame, then zero is returned.
   *
+  * This CTL is only implemented for decoder instances.
+  *
   * @param[out] x <tt>opus_int32*</tt>: pitch period at 48 kHz (or 0 if not available)
   *
   * @hideinitializer */
 #define OPUS_GET_PITCH(x) OPUS_GET_PITCH_REQUEST, __opus_check_int_ptr(x)
 
-/** Gets the encoder's configured bandpass or the decoder's last bandpass, @see OPUS_SET_BANDWIDTH
+/** Gets the encoder's configured bandpass or the decoder's last bandpass. @see OPUS_SET_BANDWIDTH
   * @param[out] x <tt>int*</tt>: Bandwidth value
   * @hideinitializer */
 #define OPUS_GET_BANDWIDTH(x) OPUS_GET_BANDWIDTH_REQUEST, __opus_check_int_ptr(x)
