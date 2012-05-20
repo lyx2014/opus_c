@@ -15,8 +15,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -47,10 +47,6 @@
   This only seems true when using near-infinite precision arithmetic so that
    the process is carried out with no rounding errors.
 
-  IBM (the author's employer) never sought to patent the idea, and to my
-   knowledge the algorithm is unencumbered by any patents, though its
-   performance is very competitive with proprietary arithmetic coding.
-  The two are based on very similar ideas, however.
   An excellent description of implementation details is available at
    http://www.arturocampos.com/ac_range.html
   A recent work \cite{MNW98} which proposes several changes to arithmetic
@@ -126,6 +122,11 @@ void ec_dec_init(ec_dec *_this,unsigned char *_buf,opus_uint32 _storage){
   _this->end_offs=0;
   _this->end_window=0;
   _this->nend_bits=0;
+  /*This is the offset from which ec_tell() will subtract partial bits.
+    The final value after the ec_dec_normalize() call will be the same as in
+     the encoder, but we have to compensate for the bits that are added there.*/
+  _this->nbits_total=EC_CODE_BITS+1
+   -((EC_CODE_BITS-EC_CODE_EXTRA)/EC_SYM_BITS)*EC_SYM_BITS;
   _this->offs=0;
   _this->rng=1U<<EC_CODE_EXTRA;
   _this->rem=ec_read_byte(_this);
@@ -133,10 +134,6 @@ void ec_dec_init(ec_dec *_this,unsigned char *_buf,opus_uint32 _storage){
   _this->error=0;
   /*Normalize the interval.*/
   ec_dec_normalize(_this);
-  /*This is the offset from which ec_tell() will subtract partial bits.
-    This must be after the initial ec_dec_normalize(), or you will have to
-     compensate for the bits that are read there.*/
-  _this->nbits_total=EC_CODE_BITS+1;
 }
 
 unsigned ec_decode(ec_dec *_this,unsigned _ft){

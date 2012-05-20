@@ -15,8 +15,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -44,7 +44,7 @@
 #define MAX_FRAME_SAMP (5760)
 extern int jackpot;
 
-int test_decoder_code0(void)
+int test_decoder_code0(int no_fuzz)
 {
    static const opus_int32 fsv[5]={48000,24000,16000,12000,8000};
    int err,skip,plen;
@@ -91,7 +91,7 @@ int test_decoder_code0(void)
       }
    }
 
-   decsize=opus_decoder_get_size(2);
+   decsize=opus_decoder_get_size(1);
    decbak=(OpusDecoder *)malloc(decsize);
    if(decbak==NULL)test_failed();
 
@@ -192,6 +192,16 @@ int test_decoder_code0(void)
       }
    }
    fprintf(stdout,"  dec[all] all 2-byte prefix for length 3 and PLC, all modes (64) OK.\n");
+
+   if(no_fuzz)
+   {
+      fprintf(stdout,"  Skipping many tests which fuzz the decoder as requested.\n");
+      for(t=0;t<5*2;t++)opus_decoder_destroy(dec[t]);
+      printf("  Decoders stopped.\n");
+      free(outbuf_int);
+      free(packet);
+      return 0;
+   }
 
    {
      /*We only test a subset of the modes here simply because the longer
@@ -335,21 +345,35 @@ int test_decoder_code0(void)
 int main(int _argc, char **_argv)
 {
    const char * oversion;
+   const char * env_seed;
+   int env_used;
+
    if(_argc>2)
    {
       fprintf(stderr,"Usage: %s [<seed>]\n",_argv[0]);
       return 1;
    }
 
+   env_used=0;
+   env_seed=getenv("SEED");
    if(_argc>1)iseed=atoi(_argv[1]);
+   else if(env_seed)
+   {
+      iseed=atoi(env_seed);
+      env_used=1;
+   }
    else iseed=(opus_uint32)time(NULL)^((getpid()&65535)<<16);
    Rw=Rz=iseed;
 
    oversion=opus_get_version_string();
    if(!oversion)test_failed();
    fprintf(stderr,"Testing %s decoder. Random seed: %u (%.4X)\n", oversion, iseed, fast_rand() % 65535);
+   if(env_used)fprintf(stderr,"  Random seed set from the environment (SEED=%s).\n", env_seed);
 
-   test_decoder_code0();
+   /*Setting TEST_OPUS_NOFUZZ tells the tool not to send garbage data
+     into the decoders. This is helpful because garbage data
+     may cause the decoders to clip, which angers CLANG IOC.*/
+   test_decoder_code0(getenv("TEST_OPUS_NOFUZZ")!=NULL);
 
    return 0;
 }

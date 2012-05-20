@@ -1,28 +1,28 @@
 /***********************************************************************
 Copyright (c) 2006-2011, Skype Limited. All rights reserved.
 Redistribution and use in source and binary forms, with or without
-modification, (subject to the limitations in the disclaimer below)
-are permitted provided that the following conditions are met:
+modification, are permitted provided that the following conditions
+are met:
 - Redistributions of source code must retain the above copyright notice,
 this list of conditions and the following disclaimer.
 - Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
-- Neither the name of Skype Limited, nor the names of specific
-contributors, may be used to endorse or promote products derived from
-this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED
-BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
-CONTRIBUTORS ''AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- Neither the name of Internet Society, IETF or IETF Trust, nor the 
+names of specific contributors, may be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -133,17 +133,17 @@ opus_int silk_Encode(                                   /* O    Returns error co
     const opus_int16                *samplesIn,         /* I    Speech sample input vector                      */
     opus_int                        nSamplesIn,         /* I    Number of samples in input vector               */
     ec_enc                          *psRangeEnc,        /* I/O  Compressor data structure                       */
-    opus_int                        *nBytesOut,         /* I/O  Number of bytes in payload (input: Max bytes)   */
+    opus_int32                      *nBytesOut,         /* I/O  Number of bytes in payload (input: Max bytes)   */
     const opus_int                  prefillFlag         /* I    Flag to indicate prefilling buffers no coding   */
 )
 {
     opus_int   n, i, nBits, flags, tmp_payloadSize_ms = 0, tmp_complexity = 0, ret = 0;
     opus_int   nSamplesToBuffer, nBlocksOf10ms, nSamplesFromInput = 0;
     opus_int   speech_act_thr_for_switch_Q8;
-    opus_int32 TargetRate_bps, MStargetRates_bps[ 2 ], channelRate_bps, LBRR_symbol;
+    opus_int32 TargetRate_bps, MStargetRates_bps[ 2 ], channelRate_bps, LBRR_symbol, sum;
     silk_encoder *psEnc = ( silk_encoder * )encState;
-    opus_int16 buf[ MAX_FRAME_LENGTH_MS * MAX_API_FS_KHZ + MAX_ENCODER_DELAY];
-    opus_int transition, delay, curr_block, tot_blocks;
+    opus_int16 buf[ MAX_FRAME_LENGTH_MS * MAX_API_FS_KHZ ];
+    opus_int transition, curr_block, tot_blocks;
 
     psEnc->state_Fxx[ 0 ].sCmn.nFramesEncoded = psEnc->state_Fxx[ 1 ].sCmn.nFramesEncoded = 0;
 
@@ -233,7 +233,6 @@ opus_int silk_Encode(                                   /* O    Returns error co
     }
     silk_assert( encControl->nChannelsInternal == 1 || psEnc->state_Fxx[ 0 ].sCmn.fs_kHz == psEnc->state_Fxx[ 1 ].sCmn.fs_kHz );
 
-    delay = psEnc->state_Fxx[ 0 ].sCmn.delay;
     /* Input buffering/resampling and encoding */
     while( 1 ) {
         nSamplesToBuffer  = psEnc->state_Fxx[ 0 ].sCmn.frame_length - psEnc->state_Fxx[ 0 ].sCmn.inputBufIx;
@@ -243,15 +242,12 @@ opus_int silk_Encode(                                   /* O    Returns error co
         if( encControl->nChannelsAPI == 2 && encControl->nChannelsInternal == 2 ) {
             opus_int id = psEnc->state_Fxx[ 0 ].sCmn.nFramesEncoded;
             for( n = 0; n < nSamplesFromInput; n++ ) {
-                buf[ n+delay ] = samplesIn[ 2 * n ];
+                buf[ n ] = samplesIn[ 2 * n ];
             }
-            silk_memcpy(buf, &psEnc->state_Fxx[ 0 ].sCmn.delayBuf[ MAX_ENCODER_DELAY - delay ], delay * sizeof(opus_int16));
             /* Making sure to start both resamplers from the same state when switching from mono to stereo */
-            if(psEnc->nPrevChannelsInternal == 1 && id==0) {
+            if( psEnc->nPrevChannelsInternal == 1 && id==0 ) {
                silk_memcpy( &psEnc->state_Fxx[ 1 ].sCmn.resampler_state, &psEnc->state_Fxx[ 0 ].sCmn.resampler_state, sizeof(psEnc->state_Fxx[ 1 ].sCmn.resampler_state));
-               silk_memcpy( &psEnc->state_Fxx[ 1 ].sCmn.delayBuf, &psEnc->state_Fxx[ 0 ].sCmn.delayBuf, MAX_ENCODER_DELAY*sizeof(opus_int16));
             }
-            silk_memcpy(psEnc->state_Fxx[ 0 ].sCmn.delayBuf, buf + nSamplesFromInput + delay - MAX_ENCODER_DELAY, MAX_ENCODER_DELAY*sizeof(opus_int16));
 
             ret += silk_resampler( &psEnc->state_Fxx[ 0 ].sCmn.resampler_state,
                 &psEnc->state_Fxx[ 0 ].sCmn.inputBuf[ psEnc->state_Fxx[ 0 ].sCmn.inputBufIx + 2 ], buf, nSamplesFromInput );
@@ -260,25 +256,18 @@ opus_int silk_Encode(                                   /* O    Returns error co
             nSamplesToBuffer  = psEnc->state_Fxx[ 1 ].sCmn.frame_length - psEnc->state_Fxx[ 1 ].sCmn.inputBufIx;
             nSamplesToBuffer  = silk_min( nSamplesToBuffer, 10 * nBlocksOf10ms * psEnc->state_Fxx[ 1 ].sCmn.fs_kHz );
             for( n = 0; n < nSamplesFromInput; n++ ) {
-                buf[ n + delay ] = samplesIn[ 2 * n + 1 ];
+                buf[ n ] = samplesIn[ 2 * n + 1 ];
             }
-            silk_memcpy(buf, &psEnc->state_Fxx[ 1 ].sCmn.delayBuf[ MAX_ENCODER_DELAY - delay ], delay * sizeof(opus_int16));
             ret += silk_resampler( &psEnc->state_Fxx[ 1 ].sCmn.resampler_state,
                 &psEnc->state_Fxx[ 1 ].sCmn.inputBuf[ psEnc->state_Fxx[ 1 ].sCmn.inputBufIx + 2 ], buf, nSamplesFromInput );
-            silk_memcpy(psEnc->state_Fxx[ 1 ].sCmn.delayBuf, buf + nSamplesFromInput + delay - MAX_ENCODER_DELAY, MAX_ENCODER_DELAY*sizeof(opus_int16));
 
             psEnc->state_Fxx[ 1 ].sCmn.inputBufIx += nSamplesToBuffer;
         } else if( encControl->nChannelsAPI == 2 && encControl->nChannelsInternal == 1 ) {
             /* Combine left and right channels before resampling */
             for( n = 0; n < nSamplesFromInput; n++ ) {
-                buf[ n + delay ] = (opus_int16)silk_RSHIFT_ROUND( samplesIn[ 2 * n ] + samplesIn[ 2 * n + 1 ],  1 );
+                sum = samplesIn[ 2 * n ] + samplesIn[ 2 * n + 1 ];
+                buf[ n ] = (opus_int16)silk_RSHIFT_ROUND( sum,  1 );
             }
-            if(psEnc->nPrevChannelsInternal == 2 && psEnc->state_Fxx[ 0 ].sCmn.nFramesEncoded==0) {
-               for( n = 0; n<MAX_ENCODER_DELAY; n++ ) {
-                  psEnc->state_Fxx[ 0 ].sCmn.delayBuf[ n ] = silk_RSHIFT(psEnc->state_Fxx[ 0 ].sCmn.delayBuf[ n ]+(opus_int32)psEnc->state_Fxx[ 1 ].sCmn.delayBuf[ n ], 1);
-               }
-            }
-            silk_memcpy(buf, &psEnc->state_Fxx[ 0 ].sCmn.delayBuf[ MAX_ENCODER_DELAY - delay ], delay * sizeof(opus_int16));
             ret += silk_resampler( &psEnc->state_Fxx[ 0 ].sCmn.resampler_state,
                 &psEnc->state_Fxx[ 0 ].sCmn.inputBuf[ psEnc->state_Fxx[ 0 ].sCmn.inputBufIx + 2 ], buf, nSamplesFromInput );
             /* On the first mono frame, average the results for the two resampler states  */
@@ -291,15 +280,12 @@ opus_int silk_Encode(                                   /* O    Returns error co
                                   + psEnc->state_Fxx[ 1 ].sCmn.inputBuf[ psEnc->state_Fxx[ 1 ].sCmn.inputBufIx+n+2 ], 1);
                }
             }
-            silk_memcpy(psEnc->state_Fxx[ 0 ].sCmn.delayBuf, buf + nSamplesFromInput + delay - MAX_ENCODER_DELAY, MAX_ENCODER_DELAY*sizeof(opus_int16));
             psEnc->state_Fxx[ 0 ].sCmn.inputBufIx += nSamplesToBuffer;
         } else {
             silk_assert( encControl->nChannelsAPI == 1 && encControl->nChannelsInternal == 1 );
-            silk_memcpy(buf + delay, samplesIn, nSamplesFromInput*sizeof(opus_int16));
-            silk_memcpy(buf, &psEnc->state_Fxx[ 0 ].sCmn.delayBuf[ MAX_ENCODER_DELAY - delay ], delay * sizeof(opus_int16));
+            silk_memcpy(buf, samplesIn, nSamplesFromInput*sizeof(opus_int16));
             ret += silk_resampler( &psEnc->state_Fxx[ 0 ].sCmn.resampler_state,
                 &psEnc->state_Fxx[ 0 ].sCmn.inputBuf[ psEnc->state_Fxx[ 0 ].sCmn.inputBufIx + 2 ], buf, nSamplesFromInput );
-            silk_memcpy(psEnc->state_Fxx[ 0 ].sCmn.delayBuf, buf + nSamplesFromInput + delay - MAX_ENCODER_DELAY, MAX_ENCODER_DELAY*sizeof(opus_int16));
             psEnc->state_Fxx[ 0 ].sCmn.inputBufIx += nSamplesToBuffer;
         }
 
@@ -402,11 +388,11 @@ opus_int silk_Encode(                                   /* O    Returns error co
                         silk_memset( &psEnc->state_Fxx[ 1 ].sCmn.sNSQ,            0, sizeof( psEnc->state_Fxx[ 1 ].sCmn.sNSQ ) );
                         silk_memset( psEnc->state_Fxx[ 1 ].sCmn.prev_NLSFq_Q15,   0, sizeof( psEnc->state_Fxx[ 1 ].sCmn.prev_NLSFq_Q15 ) );
                         silk_memset( &psEnc->state_Fxx[ 1 ].sCmn.sLP.In_LP_State, 0, sizeof( psEnc->state_Fxx[ 1 ].sCmn.sLP.In_LP_State ) );
-                        psEnc->state_Fxx[ 1 ].sCmn.prevLag                = 100;
-                        psEnc->state_Fxx[ 1 ].sCmn.sNSQ.lagPrev           = 100;
-                        psEnc->state_Fxx[ 1 ].sShape.LastGainIndex        = 10;
-                        psEnc->state_Fxx[ 1 ].sCmn.prevSignalType         = TYPE_NO_VOICE_ACTIVITY;
-                        psEnc->state_Fxx[ 1 ].sCmn.sNSQ.prev_inv_gain_Q16 = 65536;
+                        psEnc->state_Fxx[ 1 ].sCmn.prevLag                 = 100;
+                        psEnc->state_Fxx[ 1 ].sCmn.sNSQ.lagPrev            = 100;
+                        psEnc->state_Fxx[ 1 ].sShape.LastGainIndex         = 10;
+                        psEnc->state_Fxx[ 1 ].sCmn.prevSignalType          = TYPE_NO_VOICE_ACTIVITY;
+                        psEnc->state_Fxx[ 1 ].sCmn.sNSQ.prev_gain_Q16      = 65536;
                         psEnc->state_Fxx[ 1 ].sCmn.first_frame_after_reset = 1;
                     }
                     silk_encode_do_VAD_Fxx( &psEnc->state_Fxx[ 1 ] );

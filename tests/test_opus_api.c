@@ -15,8 +15,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -92,8 +92,8 @@ opus_int32 test_dec_api(void)
 #endif
    short sbuf[960*2];
    int c,err;
-   int *nullptr;
-   nullptr=0;
+   opus_int32 *nullvalue;
+   nullvalue=0;
 
    cfgs=0;
    /*First test invalid configurations which should fail*/
@@ -163,7 +163,7 @@ opus_int32 test_dec_api(void)
    cfgs++;
 
    /*GET_PITCH has different execution paths depending on the previously decoded frame.*/
-   err=opus_decoder_ctl(dec, OPUS_GET_PITCH(nullptr));
+   err=opus_decoder_ctl(dec, OPUS_GET_PITCH(nullvalue));
    if(err!=OPUS_BAD_ARG)test_failed();
    cfgs++;
    VG_UNDEF(&i,sizeof(i));
@@ -297,8 +297,11 @@ opus_int32 test_msdec_api(void)
 #endif
    short sbuf[960*2];
    int a,b,c,err;
-   int *nullptr;
-   nullptr=0;
+#if 0
+   /*Relevant test not enabled for multistream*/
+   int *nullvalue;
+   nullvalue=0;
+#endif
 
    cfgs=0;
    /*First test invalid configurations which should fail*/
@@ -414,7 +417,7 @@ opus_int32 test_msdec_api(void)
    fprintf(stdout,"    OPUS_GET_BANDWIDTH ........................... OK.\n");
    cfgs++;
    /*GET_PITCH has different execution paths depending on the previously decoded frame.*/
-   err=opus_multistream_decoder_ctl(dec, OPUS_GET_PITCH(nullptr));
+   err=opus_multistream_decoder_ctl(dec, OPUS_GET_PITCH(nullvalue));
    if(err!=OPUS_BAD_ARG)test_failed();
    cfgs++;
    VG_UNDEF(&i,sizeof(i));

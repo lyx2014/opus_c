@@ -1,28 +1,28 @@
 /***********************************************************************
 Copyright (c) 2006-2011, Skype Limited. All rights reserved.
 Redistribution and use in source and binary forms, with or without
-modification, (subject to the limitations in the disclaimer below)
-are permitted provided that the following conditions are met:
+modification, are permitted provided that the following conditions
+are met:
 - Redistributions of source code must retain the above copyright notice,
 this list of conditions and the following disclaimer.
 - Redistributions in binary form must reproduce the above copyright
 notice, this list of conditions and the following disclaimer in the
 documentation and/or other materials provided with the distribution.
-- Neither the name of Skype Limited, nor the names of specific
-contributors, may be used to endorse or promote products derived from
-this software without specific prior written permission.
-NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE GRANTED
-BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND
-CONTRIBUTORS ''AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING,
-BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
-FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
-NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
-USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON
-ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- Neither the name of Internet Society, IETF or IETF Trust, nor the 
+names of specific contributors, may be used to endorse or promote
+products derived from this software without specific prior written
+permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS”
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 ***********************************************************************/
 
 #ifdef HAVE_CONFIG_H
@@ -68,7 +68,7 @@ opus_int32 silk_NLSF_del_dec_quant(                             /* O    Returns 
         for( j = 0; j < nStates; j++ ) {
             pred_Q10 = silk_SMULWB( pred_coef_Q16, prev_out_Q10[ j ] );
             res_Q10  = silk_SUB16( in_Q10, pred_Q10 );
-            ind_tmp  = silk_SMULWB( inv_quant_step_size_Q6, res_Q10 );
+            ind_tmp  = silk_SMULWB( (opus_int32)inv_quant_step_size_Q6, res_Q10 );
             ind_tmp  = silk_LIMIT( ind_tmp, -NLSF_QUANT_MAX_AMPLITUDE_EXT, NLSF_QUANT_MAX_AMPLITUDE_EXT-1 );
             ind[ j ][ i ] = (opus_int8)ind_tmp;
 
@@ -86,8 +86,8 @@ opus_int32 silk_NLSF_del_dec_quant(                             /* O    Returns 
                 out0_Q10 = silk_ADD16( out0_Q10, SILK_FIX_CONST( NLSF_QUANT_LEVEL_ADJ, 10 ) );
                 out1_Q10 = silk_ADD16( out1_Q10, SILK_FIX_CONST( NLSF_QUANT_LEVEL_ADJ, 10 ) );
             }
-            out0_Q10  = silk_SMULWB( out0_Q10, quant_step_size_Q16 );
-            out1_Q10  = silk_SMULWB( out1_Q10, quant_step_size_Q16 );
+            out0_Q10  = silk_SMULWB( (opus_int32)out0_Q10, quant_step_size_Q16 );
+            out1_Q10  = silk_SMULWB( (opus_int32)out1_Q10, quant_step_size_Q16 );
             out0_Q10  = silk_ADD16( out0_Q10, pred_Q10 );
             out1_Q10  = silk_ADD16( out1_Q10, pred_Q10 );
             prev_out_Q10[ j           ] = out0_Q10;

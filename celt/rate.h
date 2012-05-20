@@ -16,8 +16,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -66,12 +66,12 @@ static inline int bits2pulses(const CELTMode *m, int band, int LM, int bits)
    {
       int mid = (lo+hi+1)>>1;
       /* OPT: Make sure this is implemented with a conditional move */
-      if (cache[mid] >= bits)
+      if ((int)cache[mid] >= bits)
          hi = mid;
       else
          lo = mid;
    }
-   if (bits- (lo == 0 ? -1 : cache[lo]) <= cache[hi]-bits)
+   if (bits- (lo == 0 ? -1 : (int)cache[lo]) <= (int)cache[hi]-bits)
       return lo;
    else
       return hi;
@@ -96,6 +96,6 @@ static inline int pulses2bits(const CELTMode *m, int band, int LM, int pulses)
  @return Total number of bits allocated
 */
 int compute_allocation(const CELTMode *m, int start, int end, const int *offsets, const int *cap, int alloc_trim, int *intensity, int *dual_stero,
-      opus_int32 total, opus_int32 *balance, int *pulses, int *ebits, int *fine_priority, int _C, int LM, ec_ctx *ec, int encode, int prev);
+      opus_int32 total, opus_int32 *balance, int *pulses, int *ebits, int *fine_priority, int C, int LM, ec_ctx *ec, int encode, int prev);
 
 #endif

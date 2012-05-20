@@ -19,8 +19,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -31,6 +31,10 @@
 
 #ifndef STACK_ALLOC_H
 #define STACK_ALLOC_H
+
+#if (!defined (VAR_ARRAYS) && !defined (USE_ALLOCA) && !defined (NONTHREADSAFE_PSEUDOSTACK))
+#error "Opus requires one of VAR_ARRAYS, USE_ALLOCA, or NONTHREADSAFE_PSEUDOSTACK be defined to select the temporary allocation mode."
+#endif
 
 #ifdef USE_ALLOCA
 # ifdef WIN32
@@ -109,7 +113,7 @@
 char *global_stack=0;
 #else
 extern char *global_stack;
-#endif /*CELT_C*/
+#endif /* CELT_C */
 
 #ifdef ENABLE_VALGRIND
 
@@ -119,7 +123,7 @@ extern char *global_stack;
 char *global_stack_top=0;
 #else
 extern char *global_stack_top;
-#endif /*CELT_C*/
+#endif /* CELT_C */
 
 #define ALIGN(stack, size) ((stack) += ((size) - (long)(stack)) & ((size) - 1))
 #define PUSH(stack, size, type) (VALGRIND_MAKE_MEM_NOACCESS(stack, global_stack_top-stack),ALIGN((stack),sizeof(type)/sizeof(char)),VALGRIND_MAKE_MEM_UNDEFINED(stack, ((size)*sizeof(type)/sizeof(char))),(stack)+=(2*(size)*sizeof(type)/sizeof(char)),(type*)((stack)-(2*(size)*sizeof(type)/sizeof(char))))
@@ -133,13 +137,13 @@ extern char *global_stack_top;
 #define RESTORE_STACK (global_stack = _saved_stack)
 #define ALLOC_STACK char *_saved_stack; (global_stack = (global_stack==0) ? opus_alloc_scratch(GLOBAL_STACK_SIZE) : global_stack); _saved_stack = global_stack;
 
-#endif /*ENABLE_VALGRIND*/
+#endif /* ENABLE_VALGRIND */
 
 #include "os_support.h"
 #define VARDECL(type, var) type *var
 #define ALLOC(var, size, type) var = PUSH(global_stack, size, type)
 #define SAVE_STACK char *_saved_stack = global_stack;
 
-#endif /*VAR_ARRAYS*/
+#endif /* VAR_ARRAYS */
 
-#endif /*STACK_ALLOC_H*/
+#endif /* STACK_ALLOC_H */

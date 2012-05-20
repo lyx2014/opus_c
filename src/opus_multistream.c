@@ -15,8 +15,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -108,7 +108,7 @@ static int get_mono_channel(const ChannelLayout *layout, int stream_id, int prev
    i = (prev<0) ? 0 : prev+1;
    for (;i<layout->nb_channels;i++)
    {
-      if (layout->mapping[i]==2*layout->nb_coupled_streams+stream_id)
+      if (layout->mapping[i]==stream_id+layout->nb_coupled_streams)
          return i;
    }
    return -1;
@@ -154,7 +154,7 @@ int opus_multistream_encoder_init(
       int channels,
       int streams,
       int coupled_streams,
-      unsigned char *mapping,
+      const unsigned char *mapping,
       int application
 )
 {
@@ -193,7 +193,7 @@ OpusMSEncoder *opus_multistream_encoder_create(
       int channels,
       int streams,
       int coupled_streams,
-      unsigned char *mapping,
+      const unsigned char *mapping,
       int application,
       int *error
 )
@@ -217,7 +217,8 @@ OpusMSEncoder *opus_multistream_encoder_create(
    return st;
 }
 
-
+/* Max size in case the encoder decides to return three frames */
+#define MS_FRAME_TMP (3*1275+7)
 #ifdef FIXED_POINT
 int opus_multistream_encode(
 #else
@@ -227,7 +228,7 @@ int opus_multistream_encode_float(
     const opus_val16 *pcm,
     int frame_size,
     unsigned char *data,
-    int max_data_bytes
+    opus_int32 max_data_bytes
 )
 {
    int coupled_size;
@@ -236,8 +237,7 @@ int opus_multistream_encode_float(
    char *ptr;
    int tot_size;
    VARDECL(opus_val16, buf);
-   /* Max size in case the encoder decides to return three frames */
-   unsigned char tmp_data[3*1275+7];
+   unsigned char tmp_data[MS_FRAME_TMP];
    OpusRepacketizer rp;
    ALLOC_STACK;
 
@@ -246,7 +246,7 @@ int opus_multistream_encode_float(
    coupled_size = opus_encoder_get_size(2);
    mono_size = opus_encoder_get_size(1);
 
-   if (max_data_bytes < 2*st->layout.nb_streams-1)
+   if (max_data_bytes < 4*st->layout.nb_streams-1)
    {
       RESTORE_STACK;
       return OPUS_BUFFER_TOO_SMALL;
@@ -280,8 +280,9 @@ int opus_multistream_encode_float(
       }
       /* number of bytes left (+Toc) */
       curr_max = max_data_bytes - tot_size;
-      /* Reserve one byte for the last stream and 2 for the others */
-      curr_max -= 2*(st->layout.nb_streams-s)-1;
+      /* Reserve three bytes for the last stream and four for the others */
+      curr_max -= IMAX(0,4*(st->layout.nb_streams-s-1)-1);
+      curr_max = IMIN(curr_max,MS_FRAME_TMP);
       len = opus_encode_native(enc, buf, frame_size, tmp_data, curr_max);
       if (len<0)
       {
@@ -309,7 +310,7 @@ int opus_multistream_encode_float(
     const float *pcm,
     int frame_size,
     unsigned char *data,
-    int max_data_bytes
+    opus_int32 max_data_bytes
 )
 {
    int i, ret;
@@ -333,7 +334,7 @@ int opus_multistream_encode(
     const opus_int16 *pcm,
     int frame_size,
     unsigned char *data,
-    int max_data_bytes
+    opus_int32 max_data_bytes
 )
 {
    int i, ret;
@@ -375,6 +376,10 @@ int opus_multistream_encoder_ctl(OpusMSEncoder *st, int request, ...)
       {
          OpusEncoder *enc;
          enc = (OpusEncoder*)ptr;
+         if (s < st->layout.nb_coupled_streams)
+            ptr += align(coupled_size);
+         else
+            ptr += align(mono_size);
          opus_encoder_ctl(enc, request, value * (s < st->layout.nb_coupled_streams ? 2 : 1));
       }
    }
@@ -389,6 +394,10 @@ int opus_multistream_encoder_ctl(OpusMSEncoder *st, int request, ...)
          opus_int32 rate;
          OpusEncoder *enc;
          enc = (OpusEncoder*)ptr;
+         if (s < st->layout.nb_coupled_streams)
+            ptr += align(coupled_size);
+         else
+            ptr += align(mono_size);
          opus_encoder_ctl(enc, request, &rate);
          *value += rate;
       }
@@ -517,7 +526,7 @@ int opus_multistream_decoder_init(
       int channels,
       int streams,
       int coupled_streams,
-      unsigned char *mapping
+      const unsigned char *mapping
 )
 {
    int coupled_size;
@@ -559,7 +568,7 @@ OpusMSDecoder *opus_multistream_decoder_create(
       int channels,
       int streams,
       int coupled_streams,
-      unsigned char *mapping,
+      const unsigned char *mapping,
       int *error
 )
 {
@@ -587,7 +596,7 @@ OpusMSDecoder *opus_multistream_decoder_create(
 static int opus_multistream_decode_native(
       OpusMSDecoder *st,
       const unsigned char *data,
-      int len,
+      opus_int32 len,
       opus_val16 *pcm,
       int frame_size,
       int decode_fec
@@ -693,7 +702,7 @@ static int opus_multistream_decode_native(
 int opus_multistream_decode(
       OpusMSDecoder *st,
       const unsigned char *data,
-      int len,
+      opus_int32 len,
       opus_int16 *pcm,
       int frame_size,
       int decode_fec
@@ -704,7 +713,7 @@ int opus_multistream_decode(
 
 #ifndef DISABLE_FLOAT_API
 int opus_multistream_decode_float(OpusMSDecoder *st, const unsigned char *data,
-      int len, float *pcm, int frame_size, int decode_fec)
+      opus_int32 len, float *pcm, int frame_size, int decode_fec)
 {
    VARDECL(opus_int16, out);
    int ret, i;
@@ -726,7 +735,7 @@ int opus_multistream_decode_float(OpusMSDecoder *st, const unsigned char *data,
 #else
 
 int opus_multistream_decode(OpusMSDecoder *st, const unsigned char *data,
-      int len, opus_int16 *pcm, int frame_size, int decode_fec)
+      opus_int32 len, opus_int16 *pcm, int frame_size, int decode_fec)
 {
    VARDECL(float, out);
    int ret, i;
@@ -747,7 +756,7 @@ int opus_multistream_decode(OpusMSDecoder *st, const unsigned char *data,
 int opus_multistream_decode_float(
       OpusMSDecoder *st,
       const unsigned char *data,
-      int len,
+      opus_int32 len,
       float *pcm,
       int frame_size,
       int decode_fec

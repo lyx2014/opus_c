@@ -21,8 +21,8 @@
    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
    ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-   A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR
-   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+   A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
+   OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
    EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
    PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
    PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
@@ -66,7 +66,7 @@ static void find_best_pitch(opus_val32 *xcorr, opus_val16 *y, int len,
    best_pitch[0] = 0;
    best_pitch[1] = 1;
    for (j=0;j<len;j++)
-      Syy = MAC16_16(Syy, y[j],y[j]);
+      Syy = ADD32(Syy, SHR32(MULT16_16(y[j],y[j]), yshift));
    for (i=0;i<max_pitch;i++)
    {
       if (xcorr[i]>0)
@@ -74,6 +74,11 @@ static void find_best_pitch(opus_val32 *xcorr, opus_val16 *y, int len,
          opus_val16 num;
          opus_val32 xcorr16;
          xcorr16 = EXTRACT16(VSHR32(xcorr[i], xshift));
+#ifndef FIXED_POINT
+         /* Considering the range of xcorr16, this should avoid both underflows
+            and overflows (inf) when squaring xcorr16 */
+         xcorr16 *= 1e-12;
+#endif
          num = MULT16_16_Q15(xcorr16,xcorr16);
          if (MULT16_32_Q15(num,best_den[1]) > MULT16_32_Q15(best_num[1],Syy))
          {
@@ -98,21 +103,29 @@ static void find_best_pitch(opus_val32 *xcorr, opus_val16 *y, int len,
 }
 
 void pitch_downsample(celt_sig * restrict x[], opus_val16 * restrict x_lp,
-      int len, int _C)
+      int len, int C)
 {
    int i;
    opus_val32 ac[5];
    opus_val16 tmp=Q15ONE;
    opus_val16 lpc[4], mem[4]={0,0,0,0};
-   const int C = CHANNELS(_C);
+#ifdef FIXED_POINT
+   int shift;
+   opus_val32 maxabs = MAX32(1, celt_maxabs32(x[0], len));
+   if (C==2)
+      maxabs = MAX32(maxabs, celt_maxabs32(x[1], len));
+   shift = IMAX(0,celt_ilog2(maxabs)-10);
+   if (C==2)
+      shift++;
+#endif
    for (i=1;i<len>>1;i++)
-      x_lp[i] = SHR32(HALF32(HALF32(x[0][(2*i-1)]+x[0][(2*i+1)])+x[0][2*i]), SIG_SHIFT+3);
-   x_lp[0] = SHR32(HALF32(HALF32(x[0][1])+x[0][0]), SIG_SHIFT+3);
+      x_lp[i] = SHR32(HALF32(HALF32(x[0][(2*i-1)]+x[0][(2*i+1)])+x[0][2*i]), shift);
+   x_lp[0] = SHR32(HALF32(HALF32(x[0][1])+x[0][0]), shift);
    if (C==2)
    {
       for (i=1;i<len>>1;i++)
-         x_lp[i] += SHR32(HALF32(HALF32(x[1][(2*i-1)]+x[1][(2*i+1)])+x[1][2*i]), SIG_SHIFT+3);
-      x_lp[0] += SHR32(HALF32(HALF32(x[1][1])+x[1][0]), SIG_SHIFT+3);
+         x_lp[i] += SHR32(HALF32(HALF32(x[1][(2*i-1)]+x[1][(2*i+1)])+x[1][2*i]), shift);
+      x_lp[0] += SHR32(HALF32(HALF32(x[1][1])+x[1][0]), shift);
    }
 
    _celt_autocorr(x_lp, ac, NULL, 0,
@@ -232,7 +245,7 @@ void pitch_search(const opus_val16 * restrict x_lp, opus_val16 * restrict y,
    }
    find_best_pitch(xcorr, y, len>>1, max_pitch>>1, best_pitch
 #ifdef FIXED_POINT
-                   , shift, maxcorr
+                   , shift+1, maxcorr
 #endif
                    );
 
@@ -259,7 +272,7 @@ void pitch_search(const opus_val16 * restrict x_lp, opus_val16 * restrict y,
 
 static const int second_check[16] = {0, 0, 3, 2, 3, 2, 5, 2, 3, 2, 3, 2, 5, 2, 3, 2};
 opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
-      int N, int *_T0, int prev_period, opus_val16 prev_gain)
+      int N, int *T0_, int prev_period, opus_val16 prev_gain)
 {
    int k, i, T, T0;
    opus_val16 g, g0;
@@ -273,14 +286,14 @@ opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
    minperiod0 = minperiod;
    maxperiod /= 2;
    minperiod /= 2;
-   *_T0 /= 2;
+   *T0_ /= 2;
    prev_period /= 2;
    N /= 2;
    x += maxperiod;
-   if (*_T0>=maxperiod)
-      *_T0=maxperiod-1;
+   if (*T0_>=maxperiod)
+      *T0_=maxperiod-1;
 
-   T = T0 = *_T0;
+   T = T0 = *T0_;
    xx=xy=yy=0;
    for (i=0;i<N;i++)
    {
@@ -357,6 +370,7 @@ opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
          g = g1;
       }
    }
+   best_xy = MAX32(0, best_xy);
    if (best_yy <= best_xy)
       pg = Q15ONE;
    else
@@ -378,9 +392,9 @@ opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
       offset = 0;
    if (pg > g)
       pg = g;
-   *_T0 = 2*T+offset;
+   *T0_ = 2*T+offset;
 
-   if (*_T0<minperiod0)
-      *_T0=minperiod0;
+   if (*T0_<minperiod0)
+      *T0_=minperiod0;
    return pg;
 }
