@@ -2,7 +2,7 @@ Source: opus
 Section: sound
 Priority: optional
 Maintainer: Ron Lee <ron@debian.org>
-Build-Depends: debhelper (>= 5)
+Build-Depends: debhelper (>= 5), doxygen
 Standards-Version: 3.9.3.1
 Homepage: http://www.opus-codec.org
 Vcs-Git: git://git.debian.org/users/ron/opus.git
@@ -12,7 +12,7 @@ Package: libopus0
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}
-Description: The Opus codec runtime library
+Description: Opus codec runtime library
  The Opus codec is designed for interactive speech and audio transmission over
  the Internet. It is designed by the IETF Codec Working Group and incorporates
  technology from Skype's SILK codec and Xiph.Org's CELT codec.
@@ -37,7 +37,7 @@ Package: libopus-dev
 Section: libdevel
 Architecture: any
 Depends: libopus0 (= ${binary:Version})
-Description: The Opus codec library development files
+Description: Opus codec library development files
  The Opus codec is designed for interactive speech and audio transmission over
  the Internet. It is designed by the IETF Codec Working Group and incorporates
  technology from Skype's SILK codec and Xiph.Org's CELT codec.
@@ -65,4 +65,10 @@ Architecture: any
 Depends: libopus0 (= ${binary:Version})
 Description: debugging symbols for libopus
  This package provides the detached debug symbols for libopus.
+
+Package: libopus-doc
+Section: doc
+Architecture: all
+Description: libopus API documentation
+ This package contains the developer documentation for libopus.
 

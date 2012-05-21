@@ -41,29 +41,36 @@ $(objdir)/config.status: configure
 				     --build=$(DEB_BUILD_GNU_TYPE)	\
 				     --prefix=/usr
 
-build: build-arch
+build: build-arch build-indep
 
 build-arch: build-arch-stamp
 build-arch-stamp: $(objdir)/config.status
 	dh_testdir
-	$(MAKE) $(NJOBS) -C $(objdir)
+	$(MAKE) $(NJOBS) -C $(objdir) opus
 	touch $@
 
-build-indep:
+build-indep: build-indep-stamp
+build-indep-stamp: $(objdir)/config.status
+	dh_testdir
+	$(MAKE) $(NJOBS) -C $(objdir) docs
+	touch $@
 
 
-install: install-arch
+install: install-arch install-indep
 
 install-arch: install-arch-stamp
 install-arch-stamp: build-arch
 	dh_testdir
-	cd $(objdir) && $(MAKE) install DESTDIR=$(CURDIR)/debian/tmp
+	$(MAKE) -C $(objdir) install-opus DESTDIR=$(CURDIR)/debian/tmp
 	touch $@
 
 install-indep: build-indep
+	dh_testdir
+	$(MAKE) -C $(objdir) install-docs DESTDIR=$(CURDIR)/debian/tmp
+	touch $@
 
 
-binary: binary-arch
+binary: binary-arch binary-indep
 
 binary-indep: DH_OPTIONS = -i
 binary-indep: install-indep
