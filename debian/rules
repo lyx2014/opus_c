@@ -11,18 +11,25 @@ PARALLEL = $(subst parallel=,,$(filter parallel=%,$(DEB_BUILD_OPTIONS)))
 NJOBS    = -j$(or $(PARALLEL),$(NUM_CPUS),1)
 
 
+DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
+DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+
+
 ifeq (,$(findstring nostrip,$(DEB_BUILD_OPTIONS)))
 	INSTALL_PROGRAM += -s
 endif
-
 ifeq (,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
 	BUILD_TARGET = check-opus
 else
 	BUILD_TARGET = opus
 endif
 
-DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
-DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
+
+ifneq (,$(filter $(DEB_HOST_ARCH), arm armel mips mipsel))
+	EXTRA_CONFIG_FLAGS = --enable-fixed-point
+endif
+
 
 
 objdir := objs
@@ -40,7 +47,8 @@ $(objdir)/config.status: configure
 	mkdir -p $(objdir)
 	cd $(objdir) &&	../configure --host=$(DEB_HOST_GNU_TYPE)	\
 				     --build=$(DEB_BUILD_GNU_TYPE)	\
-				     --prefix=/usr
+				     --prefix=/usr			\
+				     $(EXTRA_CONFIG_FLAGS)
 
 build: build-arch build-indep
 
