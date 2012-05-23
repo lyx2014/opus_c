@@ -1,3 +1,11 @@
+opus (0.9.14+20120521-2) unstable; urgency=low
+
+  * Build the fixed point version for arm(el) and mips(el).
+    Fixes the unit test timeout seen on the mips buildd.
+  * Add some extra 'hardening' flags to those upstream uses already.
+
+ -- Ron Lee <ron@debian.org>  Wed, 23 May 2012 12:49:50 +0930
+
 opus (0.9.14+20120521-1) unstable; urgency=low
 
   * Opus draft-14 release testing.
