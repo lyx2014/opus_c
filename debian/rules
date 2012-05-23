@@ -60,6 +60,7 @@ objdir := objs
 clean:
 	dh_testdir
 	dh_testroot
+	$(RM) -r $(objdir)
 	$(RM) *-stamp
 	dh_clean
 
