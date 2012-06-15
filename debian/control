@@ -12,6 +12,7 @@ Package: libopus0
 Section: libs
 Architecture: any
 Depends: ${shlibs:Depends}
+Suggests: opus-tools
 Description: Opus codec runtime library
  The Opus codec is designed for interactive speech and audio transmission over
  the Internet. It is designed by the IETF Codec Working Group and incorporates
