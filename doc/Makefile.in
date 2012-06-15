@@ -178,9 +178,13 @@ top_srcdir = @top_srcdir@
 DOCINPUTS = $(top_srcdir)/include/opus.h \
             $(top_srcdir)/include/opus_multistream.h \
             $(top_srcdir)/include/opus_defines.h \
-            $(top_srcdir)/include/opus_types.h
+            $(top_srcdir)/include/opus_types.h \
+            $(top_srcdir)/include/opus_custom.h \
+            $(top_srcdir)/doc/header.html \
+            $(top_srcdir)/doc/footer.html \
+            $(top_srcdir)/doc/customdoxygen.css
 
-EXTRA_DIST = Doxyfile.in
+EXTRA_DIST = customdoxygen.css Doxyfile.in footer.html header.html opus_logo.svg
 all: all-am
 
 .SUFFIXES:
@@ -261,6 +265,7 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
+@HAVE_DOXYGEN_FALSE@all-local:
 all-am: Makefile all-local
 installdirs:
 install: install-am
@@ -288,7 +293,9 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
+@HAVE_DOXYGEN_FALSE@uninstall-local:
 @HAVE_DOXYGEN_FALSE@install-data-local:
+@HAVE_DOXYGEN_FALSE@clean-local:
 clean: clean-am
 
 clean-am: clean-generic clean-libtool clean-local mostlyclean-am
@@ -371,7 +378,7 @@ uninstall-am: uninstall-local
 	uninstall-local
 
 
-all-local: doxygen-build.stamp
+@HAVE_DOXYGEN_TRUE@all-local: doxygen-build.stamp
 
 @HAVE_DOXYGEN_TRUE@doxygen-build.stamp: Doxyfile $(DOCINPUTS)
 @HAVE_DOXYGEN_TRUE@	doxygen
@@ -385,20 +392,16 @@ all-local: doxygen-build.stamp
 @HAVE_DOXYGEN_TRUE@	$(INSTALL) -d $(DESTDIR)$(mandir)/man3
 @HAVE_DOXYGEN_TRUE@	cd man && find man3 -type f \
 @HAVE_DOXYGEN_TRUE@		  -exec $(INSTALL_DATA) \{} $(DESTDIR)$(mandir)/man3 \;
-@HAVE_DOXYGEN_FALSE@doxygen-build.stamp: Doxyfile $(DOCINPUTS)
-@HAVE_DOXYGEN_FALSE@	@echo "*** Warning: Doxygen not found; API documentation will not be built."
-@HAVE_DOXYGEN_FALSE@	touch $@
 
-# delete doxygen subdirs
-clean-local:
-	$(RM) -r html
-	$(RM) -r latex
-	$(RM) -r man
-	$(RM) doxygen-build.stamp
+@HAVE_DOXYGEN_TRUE@clean-local:
+@HAVE_DOXYGEN_TRUE@	$(RM) -r html
+@HAVE_DOXYGEN_TRUE@	$(RM) -r latex
+@HAVE_DOXYGEN_TRUE@	$(RM) -r man
+@HAVE_DOXYGEN_TRUE@	$(RM) doxygen-build.stamp
 
-uninstall-local:
-	$(RM) -r $(DESTDIR)$(docdir)/html
-	$(RM) $(DESTDIR)$(mandir)/man3/opus_*.3 $(DESTDIR)$(mandir)/man3/opus.h.3
+@HAVE_DOXYGEN_TRUE@uninstall-local:
+@HAVE_DOXYGEN_TRUE@	$(RM) -r $(DESTDIR)$(docdir)/html
+@HAVE_DOXYGEN_TRUE@	$(RM) $(DESTDIR)$(mandir)/man3/opus_*.3 $(DESTDIR)$(mandir)/man3/opus.h.3
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

@@ -1527,12 +1527,12 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-fixed-point    compile as fixed-point
-  --enable-fixed-point-debug  debug fixed-point implementation
-  --enable-custom-modes        Enable non-Opus modes, like 44.1 kHz and powers of two
-  --enable-float-approx   enable fast approximations for floating point
-  --enable-assertions     enable additional software error checking
-  --enable-fuzzing     causes the encoder to make random decisions
+  --enable-fixed-point       compile without floating point
+  --enable-fixed-point-debug debug fixed-point implementation
+  --enable-custom-modes      enable non-Opus modes, e.g. 44.1 kHz & 2^n frames
+  --enable-float-approx      enable fast approximations for floating point
+  --enable-assertions        enable additional software error checking
+  --enable-fuzzing           causes the encoder to make random decisions
   --disable-doc           Do not build API documentation
 
 Optional Packages:
@@ -11547,10 +11547,12 @@ has_float_approx=no
 #esac
 
 ac_enable_fixed="no";
+ac_enable_float="yes";
 # Check whether --enable-fixed-point was given.
 if test "${enable_fixed_point+set}" = set; then :
   enableval=$enable_fixed_point; if test "$enableval" = yes; then
   ac_enable_fixed="yes";
+  ac_enable_float="no";
 
 $as_echo "#define FIXED_POINT 1" >>confdefs.h
 
@@ -14339,8 +14341,8 @@ fi
 
     General configuration:
 
+      Floating point support: ........ ${ac_enable_float}
       Fast float approximations: ..... ${float_approx}
-      Fixed point support: ........... ${ac_enable_fixed}
       Fixed point debugging: ......... ${ac_enable_fixed_debug}
       Custom modes: .................. ${ac_enable_custom_modes}
       Assertion checking: ............ ${ac_enable_assertions}
@@ -14361,8 +14363,8 @@ $as_echo "
 
     General configuration:
 
+      Floating point support: ........ ${ac_enable_float}
       Fast float approximations: ..... ${float_approx}
-      Fixed point support: ........... ${ac_enable_fixed}
       Fixed point debugging: ......... ${ac_enable_fixed_debug}
       Custom modes: .................. ${ac_enable_custom_modes}
       Assertion checking: ............ ${ac_enable_assertions}
