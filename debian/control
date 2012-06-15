@@ -23,14 +23,17 @@ Description: Opus codec runtime library
  music performances.  It can scale from low bit-rate narrowband speech to very
  high quality stereo music. The current features are:
  .
-  Sampling rates from 8 to 48 kHz
   Bit-rates from 6 kb/s 510 kb/s
+  Sampling rates from 8 to 48 kHz
+  Frame sizes from 2.5 ms to 60 ms
   Support for both constant bit-rate (CBR) and variable bit-rate (VBR)
   Audio bandwidth from narrowband to full-band
   Support for speech and music
   Support for mono and stereo
-  Frame sizes from 2.5 ms to 60 ms
+  Support for up to 255 channels (multistream frames)
+  Dynamically adjustable bitrate, audio bandwidth, and frame size
   Good loss robustness and packet loss concealment (PLC)
+  Floating point and fixed-point implementation
  .
  This package provides the Opus runtime library.
 
@@ -48,14 +51,17 @@ Description: Opus codec library development files
  music performances.  It can scale from low bit-rate narrowband speech to very
  high quality stereo music. The current features are:
  .
-  Sampling rates from 8 to 48 kHz
   Bit-rates from 6 kb/s 510 kb/s
+  Sampling rates from 8 to 48 kHz
+  Frame sizes from 2.5 ms to 60 ms
   Support for both constant bit-rate (CBR) and variable bit-rate (VBR)
   Audio bandwidth from narrowband to full-band
   Support for speech and music
   Support for mono and stereo
-  Frame sizes from 2.5 ms to 60 ms
+  Support for up to 255 channels (multistream frames)
+  Dynamically adjustable bitrate, audio bandwidth, and frame size
   Good loss robustness and packet loss concealment (PLC)
+  Floating point and fixed-point implementation
  .
  This package provides the Opus library headers and development files.
 
