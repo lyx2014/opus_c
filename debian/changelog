@@ -1,3 +1,14 @@
+opus (0.9.14+20120615-1) unstable; urgency=low
+
+  * Add extern "C" protection to opus_multistream.h.
+  * Warn about unused returns and NULL arguments for functions where that would
+    always be an error in the calling code.
+  * Clearly mark fixed point builds in the internal versioning.
+  * Better documentation.
+  * Suggest opus-tools.
+
+ -- Ron Lee <ron@debian.org>  Fri, 15 Jun 2012 11:58:27 +0930
+
 opus (0.9.14+20120521-2) unstable; urgency=low
 
   * Build the fixed point version for arm(el) and mips(el).
