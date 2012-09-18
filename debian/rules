@@ -100,7 +100,8 @@ install-arch-stamp: build-arch
 	$(MAKE) -C $(objdir) install-opus DESTDIR=$(CURDIR)/debian/tmp
 	touch $@
 
-install-indep: build-indep
+install-indep: install-indep-stamp
+install-indep-stamp: build-indep
 	dh_testdir
 	$(MAKE) -C $(objdir) install-docs DESTDIR=$(CURDIR)/debian/tmp
 	touch $@
