@@ -12,10 +12,10 @@
 /* Debug fixed-point implementation */
 #undef FIXED_DEBUG
 
-/* Compile as fixed-point */
+/* Compile as fixed-point (for machines without a fast enough FPU) */
 #undef FIXED_POINT
 
-/* Compile as floating-point */
+/* Compile as floating-point (for machines with a fast enough FPU) */
 #undef FLOATING_POINT
 
 /* Float approximations */
@@ -79,19 +79,7 @@
 /* This is a build of OPUS */
 #undef OPUS_BUILD
 
-/* Version extra */
-#undef OPUS_EXTRA_VERSION
-
-/* Version major */
-#undef OPUS_MAJOR_VERSION
-
-/* Version micro */
-#undef OPUS_MICRO_VERSION
-
-/* Version minor */
-#undef OPUS_MINOR_VERSION
-
-/* Complete version string */
+/* Opus library version string */
 #undef OPUS_VERSION
 
 /* Define to the address where bug reports for this package should be sent. */
