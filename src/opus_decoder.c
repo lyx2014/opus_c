@@ -45,6 +45,7 @@
 #include "os_support.h"
 #include "structs.h"
 #include "define.h"
+#include "mathops.h"
 
 struct OpusDecoder {
    int          celt_dec_offset;
@@ -52,6 +53,7 @@ struct OpusDecoder {
    int          channels;
    opus_int32   Fs;          /** Sampling rate (at the API level) */
    silk_DecControlStruct DecControl;
+   int          decode_gain;
 
    /* Everything beyond this point gets cleared on a reset */
 #define OPUS_DECODER_RESET_START stream_channels
@@ -226,6 +228,8 @@ static int opus_decode_frame(OpusDecoder *st, const unsigned char *data,
       RESTORE_STACK;
       return OPUS_BUFFER_TOO_SMALL;
    }
+   /* Limit frame_size to avoid excessive stack allocations. */
+   frame_size = IMIN(frame_size, st->Fs/25*3);
    /* Payloads of 1 (2 including ToC) or 0 trigger the PLC/DTX */
    if (len<=1)
    {
@@ -451,7 +455,7 @@ static int opus_decode_frame(OpusDecoder *st, const unsigned char *data,
          pcm[i] = SAT16(pcm[i] + pcm_silk[i]);
 #else
       for (i=0;i<frame_size*st->channels;i++)
-         pcm[i] = pcm[i] + (opus_val16)((1./32768.)*pcm_silk[i]);
+         pcm[i] = pcm[i] + (opus_val16)((1.f/32768.f)*pcm_silk[i]);
 #endif
    }
 
@@ -500,6 +504,18 @@ static int opus_decode_frame(OpusDecoder *st, const unsigned char *data,
          smooth_fade(pcm_transition, pcm,
                      pcm, F2_5,
                      st->channels, window, st->Fs);
+      }
+   }
+
+   if(st->decode_gain)
+   {
+      opus_val32 gain;
+      gain = celt_exp2(MULT16_16_P15(QCONST16(6.48814081e-4f, 25), st->decode_gain));
+      for (i=0;i<frame_size*st->channels;i++)
+      {
+         opus_val32 x;
+         x = MULT16_32_P16(pcm[i],gain);
+         pcm[i] = SATURATE(x, 32767);
       }
    }
 
@@ -842,6 +858,17 @@ int opus_decoder_ctl(OpusDecoder *st, int request, ...)
       st->frame_size = st->Fs/400;
    }
    break;
+   case OPUS_GET_SAMPLE_RATE_REQUEST:
+   {
+      opus_int32 *value = va_arg(ap, opus_int32*);
+      if (value==NULL)
+      {
+         ret = OPUS_BAD_ARG;
+         break;
+      }
+      *value = st->Fs;
+   }
+   break;
    case OPUS_GET_PITCH_REQUEST:
    {
       opus_int32 *value = va_arg(ap, opus_int32*);
@@ -854,6 +881,28 @@ int opus_decoder_ctl(OpusDecoder *st, int request, ...)
          celt_decoder_ctl(celt_dec, OPUS_GET_PITCH(value));
       else
          *value = st->DecControl.prevPitchLag;
+   }
+   break;
+   case OPUS_GET_GAIN_REQUEST:
+   {
+      opus_int32 *value = va_arg(ap, opus_int32*);
+      if (value==NULL)
+      {
+         ret = OPUS_BAD_ARG;
+         break;
+      }
+      *value = st->decode_gain;
+   }
+   break;
+   case OPUS_SET_GAIN_REQUEST:
+   {
+       opus_int32 value = va_arg(ap, opus_int32);
+       if (value<-32768 || value>32767)
+       {
+          ret = OPUS_BAD_ARG;
+          break;
+       }
+       st->decode_gain = value;
    }
    break;
    default:
