@@ -1,3 +1,14 @@
+opus (1.0.1-1) experimental; urgency=low
+
+  * The RFC 6716 release.
+  * Cherry pick be0d8c5ee1 to fix the build system breakage from -rc3.
+  * Add the stack protector flags to /rules which got dropped from the
+    upstream build system in -rc3 too.
+  * Pushed to experimental for the new libav which needs the gain ctls.
+    Closes: #690563
+
+ -- Ron Lee <ron@debian.org>  Thu, 18 Oct 2012 10:38:53 +1030
+
 opus (0.9.14+20120615-1) unstable; urgency=low
 
   * Add extern "C" protection to opus_multistream.h.
