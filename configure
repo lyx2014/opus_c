@@ -1527,7 +1527,7 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-libtool-lock  avoid locking (might break parallel builds)
-  --enable-fixed-point       compile without floating point
+  --enable-fixed-point       compile without floating point (for machines without a fast enough FPU)
   --enable-fixed-point-debug debug fixed-point implementation
   --enable-custom-modes      enable non-Opus modes, e.g. 44.1 kHz & 2^n frames
   --enable-float-approx      enable fast approximations for floating point
@@ -2526,12 +2526,28 @@ esac
 AM_BACKSLASH='\'
 
 
-OPUS_MAJOR_VERSION=0
-OPUS_MINOR_VERSION=9
-OPUS_MICRO_VERSION=14
-OPUS_EXTRA_VERSION=
+# Read our default version string from version.mk.
+# Please update this file for releases.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking version.mk" >&5
+$as_echo_n "checking version.mk... " >&6; }
+MK_VERSION=$(awk 'BEGIN { FS = "=" }
+                  /OPUS_VERSION/ { ver = $2}
+                  END {
+                        gsub(/"/, "", ver);
+                        gsub(/^ /, "", ver);
+                        gsub(/ $/, "", ver);
+                        print ver;
+                  }' $srcdir/version.mk)
+if test -z "$MK_VERSION"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $MK_VERSION" >&5
+$as_echo "$MK_VERSION" >&6; }
+  OPUS_VERSION="$MK_VERSION"
+fi
 
-OPUS_VERSION="$OPUS_MAJOR_VERSION.$OPUS_MINOR_VERSION.$OPUS_MICRO_VERSION$OPUS_EXTRA_VERSION"
+# Override with the git version, if available.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking git revision" >&5
 $as_echo_n "checking git revision... " >&6; }
 GIT_VERSION=$(git describe --tags --match 'v*' 2>/dev/null | sed 's/^v//')
@@ -2544,44 +2560,29 @@ $as_echo "$GIT_VERSION" >&6; }
   OPUS_VERSION="$GIT_VERSION"
 fi
 
+# Use 'unknown' if all else fails.
+if test -z "$OPUS_VERSION"; then
+  OPUS_VERSION="unknown"
+fi
+
 # For automake.
-VERSION=$OPUS_VERSION
 PACKAGE=opus
+VERSION=$OPUS_VERSION
 
-# For our version string.
+# For autoconf
 
 
-# For config.h
-
-cat >>confdefs.h <<_ACEOF
-#define OPUS_VERSION "${OPUS_VERSION}"
-_ACEOF
-
+# For config.h.
 
 cat >>confdefs.h <<_ACEOF
-#define OPUS_MAJOR_VERSION ${OPUS_MAJOR_VERSION}
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define OPUS_MINOR_VERSION ${OPUS_MINOR_VERSION}
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define OPUS_MICRO_VERSION ${OPUS_MICRO_VERSION}
-_ACEOF
-
-
-cat >>confdefs.h <<_ACEOF
-#define OPUS_EXTRA_VERSION "${OPUS_EXTRA_VERSION}"
+#define OPUS_VERSION "$OPUS_VERSION"
 _ACEOF
 
 
 # For libtool.
-OPUS_LT_CURRENT=0
+OPUS_LT_CURRENT=2
 OPUS_LT_REVISION=0
-OPUS_LT_AGE=0
+OPUS_LT_AGE=2
 
 
 
@@ -3179,6 +3180,12 @@ host_os=$*
 IFS=$ac_save_IFS
 case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
+
+
+case $host_os in
+  *mingw32* ) MINGW32=yes;;
+	  * ) MINGW32=no;;
+esac
 
 case `pwd` in
   *\ * | *\	*)
@@ -4768,13 +4775,13 @@ if test "${lt_cv_nm_interface+set}" = set; then :
 else
   lt_cv_nm_interface="BSD nm"
   echo "int some_variable = 0;" > conftest.$ac_ext
-  (eval echo "\"\$as_me:4771: $ac_compile\"" >&5)
+  (eval echo "\"\$as_me:4778: $ac_compile\"" >&5)
   (eval "$ac_compile" 2>conftest.err)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4774: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
+  (eval echo "\"\$as_me:4781: $NM \\\"conftest.$ac_objext\\\"\"" >&5)
   (eval "$NM \"conftest.$ac_objext\"" 2>conftest.err > conftest.out)
   cat conftest.err >&5
-  (eval echo "\"\$as_me:4777: output\"" >&5)
+  (eval echo "\"\$as_me:4784: output\"" >&5)
   cat conftest.out >&5
   if $GREP 'External.*some_variable' conftest.out > /dev/null; then
     lt_cv_nm_interface="MS dumpbin"
@@ -5980,7 +5987,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 5983 "configure"' > conftest.$ac_ext
+  echo '#line 5990 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -7505,11 +7512,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7508: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7515: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7512: \$? = $ac_status" >&5
+   echo "$as_me:7519: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7844,11 +7851,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7847: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7854: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "$as_me:7851: \$? = $ac_status" >&5
+   echo "$as_me:7858: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -7949,11 +7956,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:7952: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:7959: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:7956: \$? = $ac_status" >&5
+   echo "$as_me:7963: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -8004,11 +8011,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"\$as_me:8007: $lt_compile\"" >&5)
+   (eval echo "\"\$as_me:8014: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "$as_me:8011: \$? = $ac_status" >&5
+   echo "$as_me:8018: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -10388,7 +10395,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10391 "configure"
+#line 10398 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10484,7 +10491,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10487 "configure"
+#line 10494 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11713,27 +11720,6 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 CFLAGS="$saved_CFLAGS $SYMBOL_VISIBILITY"
 
-
-if test $ac_cv_c_compiler_gnu = yes ; then
-saved_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS -fstack-protector-all"
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if ${CC} supports -fstack-protector-all" >&5
-$as_echo_n "checking if ${CC} supports -fstack-protector-all... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-char foo;
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-        STACK_PROTECTOR="-fstack-protector-all"
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-CFLAGS="$saved_CFLAGS $STACK_PROTECTOR"
-fi
 
 CFLAGS="$CFLAGS -W"
 

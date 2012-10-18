@@ -390,7 +390,7 @@ uninstall-am: uninstall-local
 @HAVE_DOXYGEN_TRUE@	done
 
 @HAVE_DOXYGEN_TRUE@	$(INSTALL) -d $(DESTDIR)$(mandir)/man3
-@HAVE_DOXYGEN_TRUE@	cd man && find man3 -type f \
+@HAVE_DOXYGEN_TRUE@	cd man && find man3 -type f -name opus_*.3 \
 @HAVE_DOXYGEN_TRUE@		  -exec $(INSTALL_DATA) \{} $(DESTDIR)$(mandir)/man3 \;
 
 @HAVE_DOXYGEN_TRUE@clean-local:
