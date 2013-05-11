@@ -19,13 +19,13 @@ DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 # -fstack-protector-all is added by the default autoconf tests.
 HARD_CPPFLAGS = -D_FORTIFY_SOURCE=2
 HARD_CFLAGS   = -Wformat=2
-HARD_LDFLAGS  = -z now
+HARD_LDFLAGS  = -Wl,-z,now
 
 ifneq (,$(filter-out $(DEB_HOST_ARCH), alpha hppa arm))
 	HARD_CFLAGS += -fstack-protector --param ssp-buffer-size=4
 endif
 ifneq (,$(filter-out $(DEB_HOST_ARCH), ia64 hppa avr32))
-	HARD_LDFLAGS += -z relro
+	HARD_LDFLAGS += -Wl,-z,relro
 endif
 
 # Keep dpkg-buildpackage the hell out of messing with our compile flags,
