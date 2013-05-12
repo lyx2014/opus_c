@@ -77,7 +77,7 @@ static void find_best_pitch(opus_val32 *xcorr, opus_val16 *y, int len,
 #ifndef FIXED_POINT
          /* Considering the range of xcorr16, this should avoid both underflows
             and overflows (inf) when squaring xcorr16 */
-         xcorr16 *= 1e-12;
+         xcorr16 *= 1e-12f;
 #endif
          num = MULT16_16_Q15(xcorr16,xcorr16);
          if (MULT16_32_Q15(num,best_den[1]) > MULT16_32_Q15(best_num[1],Syy))
@@ -331,6 +331,7 @@ opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
       int T1, T1b;
       opus_val16 g1;
       opus_val16 cont=0;
+      opus_val16 thresh;
       T1 = (2*T0+k)/(2*k);
       if (T1 < minperiod)
          break;
@@ -372,7 +373,14 @@ opus_val16 remove_doubling(opus_val16 *x, int maxperiod, int minperiod,
          cont = HALF32(prev_gain);
       else
          cont = 0;
-      if (g1 > QCONST16(.3f,15) + MULT16_16_Q15(QCONST16(.4f,15),g0)-cont)
+      thresh = MAX16(QCONST16(.3f,15), MULT16_16_Q15(QCONST16(.7f,15),g0)-cont);
+      /* Bias against very high pitch (very short period) to avoid false-positives
+         due to short-term correlation */
+      if (T1<3*minperiod)
+         thresh = MAX16(QCONST16(.4f,15), MULT16_16_Q15(QCONST16(.85f,15),g0)-cont);
+      else if (T1<2*minperiod)
+         thresh = MAX16(QCONST16(.5f,15), MULT16_16_Q15(QCONST16(.9f,15),g0)-cont);
+      if (g1 > thresh)
       {
          best_xy = xy;
          best_yy = yy;

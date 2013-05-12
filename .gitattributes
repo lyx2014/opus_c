@@ -1,0 +1,8 @@
+.gitignore		export-ignore
+.gitattributes		export-ignore
+
+update_version		export-ignore
+*.vcxproj*		export-ignore
+*.sln			export-ignore
+version.mk		export-ignore
+win32			export-ignore

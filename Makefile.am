@@ -14,6 +14,7 @@ if FIXED_POINT
 SILK_SOURCES += $(SILK_SOURCES_FIXED)
 else
 SILK_SOURCES += $(SILK_SOURCES_FLOAT)
+OPUS_SOURCES += $(OPUS_SOURCES_FLOAT)
 endif
 
 include celt_headers.mk
@@ -27,9 +28,9 @@ pkginclude_HEADERS = include/opus.h include/opus_multistream.h include/opus_type
 
 noinst_HEADERS = $(OPUS_HEAD) $(SILK_HEAD) $(CELT_HEAD)
 
-noinst_PROGRAMS = opus_demo repacketizer_demo opus_compare tests/test_opus_api tests/test_opus_encode tests/test_opus_decode celt/tests/test_unit_cwrs32 celt/tests/test_unit_dft celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_mathops celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_types
+noinst_PROGRAMS = opus_demo repacketizer_demo opus_compare tests/test_opus_api tests/test_opus_encode tests/test_opus_decode tests/test_opus_padding celt/tests/test_unit_cwrs32 celt/tests/test_unit_dft celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_mathops celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_types
 
-TESTS = celt/tests/test_unit_types celt/tests/test_unit_mathops celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_dft celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_cwrs32 tests/test_opus_api tests/test_opus_decode tests/test_opus_encode
+TESTS = celt/tests/test_unit_types celt/tests/test_unit_mathops celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_dft celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_cwrs32 tests/test_opus_api tests/test_opus_decode tests/test_opus_encode tests/test_opus_padding
 
 opus_demo_SOURCES = src/opus_demo.c
 
@@ -50,6 +51,9 @@ tests_test_opus_encode_LDADD = libopus.la -lm
 
 tests_test_opus_decode_SOURCES = tests/test_opus_decode.c tests/test_opus_common.h
 tests_test_opus_decode_LDADD = libopus.la -lm
+
+tests_test_opus_padding_SOURCES = tests/test_opus_padding.c tests/test_opus_common.h
+tests_test_opus_padding_LDADD = libopus.la -lm
 
 celt_tests_test_unit_cwrs32_SOURCES = celt/tests/test_unit_cwrs32.c
 celt_tests_test_unit_cwrs32_LDADD = -lm
@@ -144,6 +148,42 @@ clean-local:
 
 uninstall-local:
 	( cd doc && $(MAKE) $(AM_MAKEFLAGS) uninstall )
+
+
+# We check this every time make is run, with configure.ac being touched to
+# trigger an update of the build system files if update_version changes the
+# current PACKAGE_VERSION (or if package_version was modified manually by a
+# user with either AUTO_UPDATE=no or no update_version script present - the
+# latter being the normal case for tarball releases).
+#
+# We can't just add the package_version file to CONFIGURE_DEPENDENCIES since
+# simply running autoconf will not actually regenerate configure for us when
+# the content of that file changes (due to autoconf dependency checking not
+# knowing about that without us creating yet another file for it to include).
+#
+# The MAKECMDGOALS check is a gnu-make'ism, but will degrade 'gracefully' for
+# makes that don't support it.  The only loss of functionality is not forcing
+# an update of package_version for `make dist` if AUTO_UPDATE=no, but that is
+# unlikely to be a real problem for any real user.
+$(top_srcdir)/configure.ac: force
+	@case "$(MAKECMDGOALS)" in \
+	    dist-hook)                             exit 0       ;; \
+	    dist-* | dist | distcheck | distclean) _arg=release ;; \
+	esac; \
+	if ! $(top_srcdir)/update_version $$_arg 2> /dev/null; then \
+	    if [ ! -e $(top_srcdir)/package_version ]; then \
+		echo 'PACKAGE_VERSION="unknown"' > $(top_srcdir)/package_version; \
+	    fi; \
+	    . $(top_srcdir)/package_version || exit 1; \
+	    [ "$(PACKAGE_VERSION)" != "$$PACKAGE_VERSION" ] || exit 0; \
+	fi; \
+	touch $@
+
+force:
+
+# Create a minimal package_version file when make dist is run.
+dist-hook:
+	echo 'PACKAGE_VERSION="$(PACKAGE_VERSION)"' > $(top_distdir)/package_version
 
 
 .PHONY: opus check-opus install-opus docs install-docs

@@ -168,12 +168,6 @@ opus_int32 silk_log2lin(
     const opus_int32            inLog_Q7            /* I  input on log scale                                            */
 );
 
-/* Function that returns the maximum absolut value of the input vector */
-opus_int16 silk_int16_array_maxabs(                 /* O   Maximum absolute value, max: 2^15-1                          */
-    const opus_int16            *vec,               /* I   Input vector  [len]                                          */
-    const opus_int32            len                 /* I   Length of input vector                                       */
-);
-
 /* Compute number of bits to right shift the sum of squares of a vector    */
 /* of int16s to make it fit in an int32                                    */
 void silk_sum_sqr_shift(
@@ -252,7 +246,7 @@ opus_int silk_pitch_analysis_core(                  /* O    Voicing estimate: 0 
     opus_int                    *LTPCorr_Q15,       /* I/O  Normalized correlation; input: value from previous frame    */
     opus_int                    prevLag,            /* I    Last lag of previous frame; set to zero is unvoiced         */
     const opus_int32            search_thres1_Q16,  /* I    First stage threshold for lag candidates 0 - 1              */
-    const opus_int              search_thres2_Q15,  /* I    Final threshold for lag candidates 0 - 1                    */
+    const opus_int              search_thres2_Q13,  /* I    Final threshold for lag candidates 0 - 1                    */
     const opus_int              Fs_kHz,             /* I    Sample frequency (kHz)                                      */
     const opus_int              complexity,         /* I    Complexity setting, 0-2, where 2 is highest                 */
     const opus_int              nb_subfr            /* I    number of 5 ms subframes                                    */
@@ -313,7 +307,7 @@ void silk_burg_modified(
     opus_int32                  A_Q16[],            /* O    Prediction coefficients (length order)                      */
     const opus_int16            x[],                /* I    Input signal, length: nb_subfr * ( D + subfr_length )       */
     const opus_int32            minInvGain_Q30,     /* I    Inverse of max prediction gain                              */
-    const opus_int              subfr_length,       /* I    Input signal subframe length (incl. D preceeding samples)   */
+    const opus_int              subfr_length,       /* I    Input signal subframe length (incl. D preceding samples)    */
     const opus_int              nb_subfr,           /* I    Number of subframes stacked in x                            */
     const opus_int              D                   /* I    Order                                                       */
 );
@@ -379,7 +373,7 @@ static inline opus_int32 silk_ROR32( opus_int32 a32, opus_int rot )
     }
 }
 
-/* Allocate opus_int16 alligned to 4-byte memory address */
+/* Allocate opus_int16 aligned to 4-byte memory address */
 #if EMBEDDED_ARM
 #define silk_DWORD_ALIGN __attribute__((aligned(4)))
 #else

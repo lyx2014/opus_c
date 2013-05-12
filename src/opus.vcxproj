@@ -88,7 +88,7 @@
       <AdditionalDependencies>celt.lib;silk_common.lib;silk_fixed.lib;silk_float.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" OPUS_VERSION</Command>
+      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" PACKAGE_VERSION</Command>
       <Message>Generating version.h</Message>
     </PreBuildEvent>
     <CustomBuildStep>
@@ -116,7 +116,7 @@
       <AdditionalDependencies>celt.lib;silk_common.lib;silk_fixed.lib;silk_float.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" OPUS_VERSION</Command>
+      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" PACKAGE_VERSION</Command>
       <Message>Generating version.h</Message>
     </PreBuildEvent>
     <CustomBuildStep>
@@ -148,7 +148,7 @@
       <LinkStatus>false</LinkStatus>
     </Link>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" OPUS_VERSION</Command>
+      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" PACKAGE_VERSION</Command>
       <Message>Generating version.h</Message>
     </PreBuildEvent>
     <CustomBuildStep>
@@ -178,7 +178,7 @@
       <LinkStatus>false</LinkStatus>
     </Link>
     <PreBuildEvent>
-      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" OPUS_VERSION</Command>
+      <Command>"$(ProjectDir)..\win32\genversion.bat" "$(ProjectDir)..\win32\version.h" PACKAGE_VERSION</Command>
       <Message>Generating version.h</Message>
     </PreBuildEvent>
     <CustomBuildStep>
@@ -191,10 +191,15 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="analysis.c" />
+    <ClCompile Include="mlp.c" />
+    <ClCompile Include="mlp_data.c" />
     <ClCompile Include="opus.c" />
     <ClCompile Include="opus_decoder.c" />
     <ClCompile Include="opus_encoder.c" />
     <ClCompile Include="opus_multistream.c" />
+    <ClCompile Include="opus_multistream_decoder.c" />
+    <ClCompile Include="opus_multistream_encoder.c" />
     <ClCompile Include="repacketizer.c" />
   </ItemGroup>
   <ItemGroup>
@@ -210,7 +215,10 @@
     <ClInclude Include="..\include\opus_types.h" />
     <ClInclude Include="..\include\opus_multistream.h" />
     <ClInclude Include="..\win32\config.h" />
+    <ClInclude Include="analysis.h" />
+    <ClInclude Include="mlp.h" />
     <ClInclude Include="opus_private.h" />
+    <ClInclude Include="tansig_table.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
