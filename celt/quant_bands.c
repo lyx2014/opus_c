@@ -40,8 +40,8 @@
 #include "rate.h"
 
 #ifdef FIXED_POINT
-/* Mean energy in each band quantized in Q6 */
-static const signed char eMeans[25] = {
+/* Mean energy in each band quantized in Q4 */
+const signed char eMeans[25] = {
       103,100, 92, 85, 81,
        77, 72, 70, 78, 75,
        73, 71, 78, 74, 69,
@@ -49,8 +49,8 @@ static const signed char eMeans[25] = {
        60, 60, 60, 60, 60
 };
 #else
-/* Mean energy in each band quantized in Q6 and converted back to float */
-static const opus_val16 eMeans[25] = {
+/* Mean energy in each band quantized in Q4 and converted back to float */
+const opus_val16 eMeans[25] = {
       6.437500f, 6.250000f, 5.750000f, 5.312500f, 5.062500f,
       4.812500f, 4.500000f, 4.375000f, 4.875000f, 4.687500f,
       4.562500f, 4.437500f, 4.875000f, 4.625000f, 4.312500f,
@@ -280,15 +280,15 @@ void quant_coarse_energy(const CELTMode *m, int start, int end, int effEnd,
    if (tell+3 > budget)
       two_pass = intra = 0;
 
-   /* Encode the global flags using a simple probability model
-      (first symbols in the stream) */
-
+   max_decay = QCONST16(16.f,DB_SHIFT);
+   if (end-start>10)
+   {
 #ifdef FIXED_POINT
-      max_decay = MIN32(QCONST16(16.f,DB_SHIFT), SHL32(EXTEND32(nbAvailableBytes),DB_SHIFT-3));
+      max_decay = MIN32(max_decay, SHL32(EXTEND32(nbAvailableBytes),DB_SHIFT-3));
 #else
-   max_decay = MIN32(16.f, .125f*nbAvailableBytes);
+      max_decay = MIN32(max_decay, .125f*nbAvailableBytes);
 #endif
-
+   }
    enc_start_state = *enc;
 
    ALLOC(oldEBands_intra, C*m->nbEBands, opus_val16);
