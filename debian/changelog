@@ -1,3 +1,14 @@
+opus (1.1~alpha+20130512-1) unstable; urgency=low
+
+  * Preview snapshot of the 1.1 release.  Mostly to give people who need some
+    of the newer API functions for their own projects something to play with
+    while we finalise the rest of what is planned for this one.
+    The encoder should perform better (both for quality and bitrate) than the
+    1.0.x releases, but please do report any regressions you find upstream
+    so that they can be fixed.
+
+ -- Ron Lee <ron@debian.org>  Sun, 12 May 2013 16:33:52 +0930
+
 opus (1.0.1-1) experimental; urgency=low
 
   * The RFC 6716 release.
