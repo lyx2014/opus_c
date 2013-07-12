@@ -1,3 +1,11 @@
+opus (1.1~beta-1) unstable; urgency=low
+
+  * Adds the new surround API.
+  * Many encoder improvements, better tonality and speech/music probability
+    estimation, temporal VBR, surround masking, numerous speed optimisations.
+
+ -- Ron Lee <ron@debian.org>  Sat, 13 Jul 2013 01:54:14 +0930
+
 opus (1.1~alpha+20130512-1) unstable; urgency=low
 
   * Preview snapshot of the 1.1 release.  Mostly to give people who need some
