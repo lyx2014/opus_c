@@ -1,3 +1,9 @@
+opus (1.1~beta-2) unstable; urgency=low
+
+  * Rebuild with the correct package_version indicated.
+
+ -- Ron Lee <ron@debian.org>  Sat, 13 Jul 2013 02:49:49 +0930
+
 opus (1.1~beta-1) unstable; urgency=low
 
   * Adds the new surround API.
