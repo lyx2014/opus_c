@@ -177,6 +177,8 @@ void tonality_get_info(TonalityAnalysisState *tonal, AnalysisInfo *info_out, int
    curr_lookahead = IMAX(curr_lookahead-10, 0);
 
    psum=0;
+   /* Summing the probability of transition patterns that involve music at
+      time (DETECT_SIZE-curr_lookahead-1) */
    for (i=0;i<DETECT_SIZE-curr_lookahead;i++)
       psum += tonal->pmusic[i];
    for (;i<DETECT_SIZE;i++)
@@ -225,7 +227,7 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
     tonal->last_transition++;
     alpha = 1.f/IMIN(20, 1+tonal->count);
     alphaE = 1.f/IMIN(50, 1+tonal->count);
-    alphaE2 = 1.f/IMIN(6000, 1+tonal->count);
+    alphaE2 = 1.f/IMIN(1000, 1+tonal->count);
 
     if (tonal->count<4)
        tonal->music_prob = .5;
@@ -375,8 +377,7 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
 
     bandwidth_mask = 0;
     bandwidth = 0;
-    for (b=0;b<NB_TOT_BANDS;b++)
-       maxE = MAX32(maxE, tonal->meanE[b]);
+    maxE = 0;
     noise_floor = 5.7e-4f/(1<<(IMAX(0,lsb_depth-8)));
     noise_floor *= noise_floor;
     for (b=0;b<NB_TOT_BANDS;b++)
@@ -392,19 +393,18 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
                      + out[i].i*out[i].i + out[N-i].i*out[N-i].i;
           E += binE;
        }
-       E /= (band_end-band_start);
        maxE = MAX32(maxE, E);
-       if (tonal->count>2)
-       {
-          tonal->meanE[b] = (1-alphaE2)*tonal->meanE[b] + alphaE2*E;
-       } else {
-          tonal->meanE[b] = E;
-       }
+       tonal->meanE[b] = MAX32((1-alphaE2)*tonal->meanE[b], E);
        E = MAX32(E, tonal->meanE[b]);
-       /* 13 dB slope for spreading function */
+       /* Use a simple follower with 13 dB/Bark slope for spreading function */
        bandwidth_mask = MAX32(.05f*bandwidth_mask, E);
-       /* Checks if band looks like stationary noise or if it's below a (trivial) masking curve */
-       if (E>.1*bandwidth_mask && E*1e10f > maxE && E > noise_floor)
+       /* Consider the band "active" only if all these conditions are met:
+          1) less than 10 dB below the simple follower
+          2) less than 90 dB below the peak band (maximal masking possible considering
+             both the ATH and the loudness-dependent slope of the spreading function)
+          3) above the PCM quantization noise floor
+       */
+       if (E>.1*bandwidth_mask && E*1e9f > maxE && E > noise_floor*(band_end-band_start))
           bandwidth = b;
     }
     if (tonal->count<=2)
@@ -481,19 +481,29 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
     frame_probs[0] = .5f*(frame_probs[0]+1);
     /* Curve fitting between the MLP probability and the actual probability */
     frame_probs[0] = .01f + 1.21f*frame_probs[0]*frame_probs[0] - .23f*(float)pow(frame_probs[0], 10);
-    frame_probs[1] = .5*frame_probs[1]+.5;
-    frame_probs[0] = frame_probs[1]*frame_probs[0] + (1-frame_probs[1])*.5;
+    /* Probability of active audio (as opposed to silence) */
+    frame_probs[1] = .5f*frame_probs[1]+.5f;
+    /* Consider that silence has a 50-50 probability. */
+    frame_probs[0] = frame_probs[1]*frame_probs[0] + (1-frame_probs[1])*.5f;
 
     /*printf("%f %f ", frame_probs[0], frame_probs[1]);*/
     {
-       float tau, beta;
+       /* Probability of state transition */
+       float tau;
+       /* Represents independence of the MLP probabilities, where
+          beta=1 means fully independent. */
+       float beta;
+       /* Denormalized probability of speech (p0) and music (p1) after update */
        float p0, p1;
+       /* Probabilities for "all speech" and "all music" */
        float s0, m0;
+       /* Probability sum for renormalisation */
        float psum;
+       /* Instantaneous probability of speech and music, with beta pre-applied. */
        float speech0;
        float music0;
 
-       /* One transition every 3 minutes */
+       /* One transition every 3 minutes of active audio */
        tau = .00005f*frame_probs[1];
        beta = .05f;
        if (1) {
@@ -501,16 +511,24 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
           float p, q;
           p = MAX16(.05f,MIN16(.95f,frame_probs[0]));
           q = MAX16(.05f,MIN16(.95f,tonal->music_prob));
-          beta = .01+.05*ABS16(p-q)/(p*(1-q)+q*(1-p));
+          beta = .01f+.05f*ABS16(p-q)/(p*(1-q)+q*(1-p));
        }
+       /* p0 and p1 are the probabilities of speech and music at this frame
+          using only information from previous frame and applying the
+          state transition model */
        p0 = (1-tonal->music_prob)*(1-tau) +    tonal->music_prob *tau;
        p1 =    tonal->music_prob *(1-tau) + (1-tonal->music_prob)*tau;
+       /* We apply the current probability with exponent beta to work around
+          the fact that the probability estimates aren't independent. */
        p0 *= (float)pow(1-frame_probs[0], beta);
        p1 *= (float)pow(frame_probs[0], beta);
+       /* Normalise the probabilities to get the Marokv probability of music. */
        tonal->music_prob = p1/(p0+p1);
        info->music_prob = tonal->music_prob;
 
-       psum=1e-20;
+       /* This chunk of code deals with delayed decision. */
+       psum=1e-20f;
+       /* Instantaneous probability of speech and music, with beta pre-applied. */
        speech0 = (float)pow(1-frame_probs[0], beta);
        music0  = (float)pow(frame_probs[0], beta);
        if (tonal->count==1)
@@ -518,18 +536,25 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
           tonal->pspeech[0]=.5;
           tonal->pmusic [0]=.5;
        }
+       /* Updated probability of having only speech (s0) or only music (m0),
+          before considering the new observation. */
        s0 = tonal->pspeech[0] + tonal->pspeech[1];
        m0 = tonal->pmusic [0] + tonal->pmusic [1];
+       /* Updates s0 and m0 with instantaneous probability. */
        tonal->pspeech[0] = s0*(1-tau)*speech0;
        tonal->pmusic [0] = m0*(1-tau)*music0;
+       /* Propagate the transition probabilities */
        for (i=1;i<DETECT_SIZE-1;i++)
        {
           tonal->pspeech[i] = tonal->pspeech[i+1]*speech0;
           tonal->pmusic [i] = tonal->pmusic [i+1]*music0;
        }
+       /* Probability that the latest frame is speech, when all the previous ones were music. */
        tonal->pspeech[DETECT_SIZE-1] = m0*tau*speech0;
+       /* Probability that the latest frame is music, when all the previous ones were speech. */
        tonal->pmusic [DETECT_SIZE-1] = s0*tau*music0;
 
+       /* Renormalise probabilities to 1 */
        for (i=0;i<DETECT_SIZE;i++)
           psum += tonal->pspeech[i] + tonal->pmusic[i];
        psum = 1.f/psum;
@@ -561,9 +586,9 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
           }
        } else {
           if (tonal->music_confidence_count==0)
-             tonal->music_confidence = .9;
+             tonal->music_confidence = .9f;
           if (tonal->speech_confidence_count==0)
-             tonal->speech_confidence = .1;
+             tonal->speech_confidence = .1f;
        }
        psum = MAX16(tonal->speech_confidence, MIN16(tonal->music_confidence, psum));
     }
@@ -577,19 +602,7 @@ void tonality_analysis(TonalityAnalysisState *tonal, AnalysisInfo *info_out, con
        printf("%f ", features[i]);
     printf("\n");*/
 
-    if (bandwidth<=12)
-       tonal->opus_bandwidth = OPUS_BANDWIDTH_NARROWBAND;
-    else if (bandwidth<=14)
-       tonal->opus_bandwidth = OPUS_BANDWIDTH_MEDIUMBAND;
-    else if (bandwidth<=16)
-       tonal->opus_bandwidth = OPUS_BANDWIDTH_WIDEBAND;
-    else if (bandwidth<=18)
-       tonal->opus_bandwidth = OPUS_BANDWIDTH_SUPERWIDEBAND;
-    else
-       tonal->opus_bandwidth = OPUS_BANDWIDTH_FULLBAND;
-
     info->bandwidth = bandwidth;
-    info->opus_bandwidth = tonal->opus_bandwidth;
     /*printf("%d %d\n", info->bandwidth, info->opus_bandwidth);*/
     info->noisiness = frame_noisiness;
     info->valid = 1;

@@ -1,10 +1,16 @@
+# Provide the full test output for failed tests when using the parallel
+# test suite (which is enabled by default with automake 1.13+).
+export VERBOSE = yes
+
 AUTOMAKE_OPTIONS = subdir-objects
+ACLOCAL_AMFLAGS = -I m4
 
 lib_LTLIBRARIES = libopus.la
 
 DIST_SUBDIRS = doc
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_srcdir)/celt -I$(top_srcdir)/silk -I$(top_srcdir)/silk/float -I$(top_srcdir)/silk/fixed
+AM_CPPFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/celt -I$(top_srcdir)/silk \
+              -I$(top_srcdir)/silk/float -I$(top_srcdir)/silk/fixed
 
 include celt_sources.mk
 include silk_sources.mk
@@ -17,73 +23,82 @@ SILK_SOURCES += $(SILK_SOURCES_FLOAT)
 OPUS_SOURCES += $(OPUS_SOURCES_FLOAT)
 endif
 
+if CPU_ARM
+CELT_SOURCES += $(CELT_SOURCES_ARM)
+endif
+
 include celt_headers.mk
 include silk_headers.mk
 include opus_headers.mk
 
 libopus_la_SOURCES = $(CELT_SOURCES) $(SILK_SOURCES) $(OPUS_SOURCES)
 libopus_la_LDFLAGS = -no-undefined -version-info @OPUS_LT_CURRENT@:@OPUS_LT_REVISION@:@OPUS_LT_AGE@
+libopus_la_LIBADD = $(LIBM)
 
 pkginclude_HEADERS = include/opus.h include/opus_multistream.h include/opus_types.h include/opus_defines.h
 
 noinst_HEADERS = $(OPUS_HEAD) $(SILK_HEAD) $(CELT_HEAD)
 
+if EXTRA_PROGRAMS
 noinst_PROGRAMS = opus_demo repacketizer_demo opus_compare tests/test_opus_api tests/test_opus_encode tests/test_opus_decode tests/test_opus_padding celt/tests/test_unit_cwrs32 celt/tests/test_unit_dft celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_mathops celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_types
 
 TESTS = celt/tests/test_unit_types celt/tests/test_unit_mathops celt/tests/test_unit_entropy celt/tests/test_unit_laplace celt/tests/test_unit_dft celt/tests/test_unit_mdct celt/tests/test_unit_rotation celt/tests/test_unit_cwrs32 tests/test_opus_api tests/test_opus_decode tests/test_opus_encode tests/test_opus_padding
 
 opus_demo_SOURCES = src/opus_demo.c
 
-opus_demo_LDADD = libopus.la -lm
+opus_demo_LDADD = libopus.la $(LIBM)
 
 repacketizer_demo_SOURCES = src/repacketizer_demo.c
 
-repacketizer_demo_LDADD = libopus.la -lm
+repacketizer_demo_LDADD = libopus.la $(LIBM)
 
 opus_compare_SOURCES = src/opus_compare.c
-opus_compare_LDADD = -lm
+opus_compare_LDADD = $(LIBM)
 
 tests_test_opus_api_SOURCES = tests/test_opus_api.c tests/test_opus_common.h
-tests_test_opus_api_LDADD = libopus.la -lm
+tests_test_opus_api_LDADD = libopus.la $(LIBM)
 
 tests_test_opus_encode_SOURCES = tests/test_opus_encode.c tests/test_opus_common.h
-tests_test_opus_encode_LDADD = libopus.la -lm
+tests_test_opus_encode_LDADD = libopus.la $(LIBM)
 
 tests_test_opus_decode_SOURCES = tests/test_opus_decode.c tests/test_opus_common.h
-tests_test_opus_decode_LDADD = libopus.la -lm
+tests_test_opus_decode_LDADD = libopus.la $(LIBM)
 
 tests_test_opus_padding_SOURCES = tests/test_opus_padding.c tests/test_opus_common.h
-tests_test_opus_padding_LDADD = libopus.la -lm
+tests_test_opus_padding_LDADD = libopus.la $(LIBM)
 
 celt_tests_test_unit_cwrs32_SOURCES = celt/tests/test_unit_cwrs32.c
-celt_tests_test_unit_cwrs32_LDADD = -lm
+celt_tests_test_unit_cwrs32_LDADD = $(LIBM)
 
 celt_tests_test_unit_dft_SOURCES = celt/tests/test_unit_dft.c
-celt_tests_test_unit_dft_LDADD = -lm
+celt_tests_test_unit_dft_LDADD = $(LIBM)
 
 celt_tests_test_unit_entropy_SOURCES = celt/tests/test_unit_entropy.c
-celt_tests_test_unit_entropy_LDADD = -lm
+celt_tests_test_unit_entropy_LDADD = $(LIBM)
 
 celt_tests_test_unit_laplace_SOURCES = celt/tests/test_unit_laplace.c
-celt_tests_test_unit_laplace_LDADD = -lm
+celt_tests_test_unit_laplace_LDADD = $(LIBM)
 
 celt_tests_test_unit_mathops_SOURCES = celt/tests/test_unit_mathops.c
-celt_tests_test_unit_mathops_LDADD = -lm
+celt_tests_test_unit_mathops_LDADD = $(LIBM)
 
 celt_tests_test_unit_mdct_SOURCES = celt/tests/test_unit_mdct.c
-celt_tests_test_unit_mdct_LDADD = -lm
+celt_tests_test_unit_mdct_LDADD = $(LIBM)
 
 celt_tests_test_unit_rotation_SOURCES = celt/tests/test_unit_rotation.c
-celt_tests_test_unit_rotation_LDADD = -lm
+celt_tests_test_unit_rotation_LDADD = $(LIBM)
 
 celt_tests_test_unit_types_SOURCES = celt/tests/test_unit_types.c
-celt_tests_test_unit_types_LDADD = -lm
+celt_tests_test_unit_types_LDADD = $(LIBM)
+endif
 
 if CUSTOM_MODES
 pkginclude_HEADERS += include/opus_custom.h
+if EXTRA_PROGRAMS
 noinst_PROGRAMS += opus_custom_demo
 opus_custom_demo_SOURCES = celt/opus_custom_demo.c
-opus_custom_demo_LDADD = libopus.la -lm
+opus_custom_demo_LDADD = libopus.la $(LIBM)
+endif
 endif
 
 EXTRA_DIST = version.mk \
@@ -92,25 +107,25 @@ EXTRA_DIST = version.mk \
              opus.m4 \
              Makefile.unix \
              tests/run_vectors.sh \
-             opus.sln \
-             celt/celt.vcxproj \
-             celt/celt.vcxproj.filters \
-             src/opus_demo.vcxproj \
-             src/opus.vcxproj \
-             src/opus.vcxproj.filters \
-             src/opus_demo.vcxproj.filters \
-             tests/test_opus_decode.vcxproj.filters \
-             tests/test_opus_decode.vcxproj \
-             tests/test_opus_encode.vcxproj.filters \
-             tests/test_opus_encode.vcxproj \
-             tests/test_opus_api.vcxproj.filters \
-             tests/test_opus_api.vcxproj \
-             silk/float/silk_float.vcxproj.filters \
-             silk/float/silk_float.vcxproj \
-             silk/fixed/silk_fixed.vcxproj.filters \
-             silk/fixed/silk_fixed.vcxproj \
-             silk/silk_common.vcxproj \
-             silk/silk_common.vcxproj.filters \
+             win32/VS2010/silk_float.vcxproj \
+             win32/VS2010/celt.vcxproj.filters \
+             win32/VS2010/opus.vcxproj \
+             win32/VS2010/silk_common.vcxproj.filters \
+             win32/VS2010/silk_float.vcxproj.filters \
+             win32/VS2010/test_opus_encode.vcxproj.filters \
+             win32/VS2010/silk_common.vcxproj \
+             win32/VS2010/test_opus_encode.vcxproj \
+             win32/VS2010/opus_demo.vcxproj \
+             win32/VS2010/test_opus_api.vcxproj.filters \
+             win32/VS2010/test_opus_api.vcxproj \
+             win32/VS2010/test_opus_decode.vcxproj.filters \
+             win32/VS2010/silk_fixed.vcxproj.filters \
+             win32/VS2010/opus_demo.vcxproj.filters \
+             win32/VS2010/silk_fixed.vcxproj \
+             win32/VS2010/opus.vcxproj.filters \
+             win32/VS2010/test_opus_decode.vcxproj \
+             win32/VS2010/celt.vcxproj \
+             win32/VS2010/opus.sln \
              win32/genversion.bat \
              win32/config.h
 

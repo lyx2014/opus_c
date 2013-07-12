@@ -1,5 +1,17 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Use ARM NEON optimizations */
+#undef ARM_HAVE_NEON
+
+/* Use generic ARMv4 asm optimizations */
+#undef ARMv4_ASM
+
+/* Use ARMv5E asm optimizations */
+#undef ARMv5E_ASM
+
+/* Use ARMv6 asm optimizations */
+#undef ARMv6_ASM
+
 /* Custom modes */
 #undef CUSTOM_MODES
 
@@ -23,9 +35,6 @@
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the <getopt.h> header file. */
-#undef HAVE_GETOPT_H
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -73,6 +82,9 @@
 /* This is a build of OPUS */
 #undef OPUS_BUILD
 
+/* Use run-time CPU capabilities detection */
+#undef OPUS_HAVE_RTCD
+
 /* Define to the address where bug reports for this package should be sent. */
 #undef PACKAGE_BUGREPORT
 
@@ -90,18 +102,6 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
-
-/* The size of `int', as computed by sizeof. */
-#undef SIZEOF_INT
-
-/* The size of `long', as computed by sizeof. */
-#undef SIZEOF_LONG
-
-/* The size of `long long', as computed by sizeof. */
-#undef SIZEOF_LONG_LONG
-
-/* The size of `short', as computed by sizeof. */
-#undef SIZEOF_SHORT
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
