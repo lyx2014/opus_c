@@ -16,7 +16,6 @@ DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 
 
-# -fstack-protector-all is added by the default autoconf tests.
 HARD_CPPFLAGS = -D_FORTIFY_SOURCE=2
 HARD_CFLAGS   = -Wformat=2
 HARD_LDFLAGS  = -Wl,-z,now
