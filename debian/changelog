@@ -1,3 +1,9 @@
+opus (1.1~beta-3) unstable; urgency=low
+
+  * Bump shlibs for the surround API.
+
+ -- Ron Lee <ron@debian.org>  Sun, 14 Jul 2013 01:02:28 +0930
+
 opus (1.1~beta-2) unstable; urgency=low
 
   * Rebuild with the correct package_version indicated.
