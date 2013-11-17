@@ -1,3 +1,9 @@
+opus (1.1~beta-4) unstable; urgency=low
+
+  * Revert bogus NMU.
+
+ -- Ron Lee <ron@debian.org>  Mon, 18 Nov 2013 06:26:21 +1030
+
 opus (1.1~beta-3) unstable; urgency=low
 
   * Bump shlibs for the surround API.
