@@ -28,19 +28,12 @@ POSSIBILITY OF SUCH DAMAGE.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define inline __inline
-
 #define USE_ALLOCA            1
 
 /* Comment out the next line for floating-point code */
 /*#define FIXED_POINT           1 */
 
 #define OPUS_BUILD            1
-
-/* Get rid of the CELT VS compile warnings */
-#if 1
-#pragma warning(disable : 4996)/* This function or variable may be unsafe. Consider using fopen_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details. */
-#endif
 
 /* Enable SSE functions, if compiled with SSE/SSE2 (note that AMD64 implies SSE2) */
 #if defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP >= 1))
