@@ -14,6 +14,7 @@ NJOBS    = -j$(or $(PARALLEL),$(NUM_CPUS),1)
 DEB_BUILD_GNU_TYPE ?= $(shell dpkg-architecture -qDEB_BUILD_GNU_TYPE)
 DEB_HOST_GNU_TYPE  ?= $(shell dpkg-architecture -qDEB_HOST_GNU_TYPE)
 DEB_HOST_ARCH      ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
+DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH 2>/dev/null)
 
 
 HARD_CPPFLAGS = -D_FORTIFY_SOURCE=2
@@ -50,8 +51,13 @@ else
 endif
 
 
+ifneq (,$(DEB_HOST_MULTIARCH))
+	MADIR = /$(DEB_HOST_MULTIARCH)
+	EXTRA_CONFIG_FLAGS = --libdir=\$${prefix}/lib/$(DEB_HOST_MULTIARCH)
+endif
+
 ifneq (,$(filter $(DEB_HOST_ARCH), arm armel mips mipsel))
-	EXTRA_CONFIG_FLAGS = --enable-fixed-point
+	EXTRA_CONFIG_FLAGS += --enable-fixed-point
 endif
 
 
@@ -128,7 +134,10 @@ binary-indep: install-indep
 binary-arch: install-arch
 	dh_testdir
 	dh_testroot
-	dh_install -a --sourcedir=debian/tmp
+	dh_install -plibopus0    debian/tmp/usr/lib$(MADIR)/lib*.so.*		usr/lib$(MADIR)
+	dh_install -plibopus-dev debian/tmp/usr/include/*			usr/include
+	dh_install -plibopus-dev debian/tmp/usr/lib$(MADIR)/lib*.{a,so}		usr/lib$(MADIR)
+	dh_install -plibopus-dev debian/tmp/usr/lib$(MADIR)/pkgconfig/opus.pc	usr/lib$(MADIR)/pkgconfig
 	dh_installdocs -a
 	dh_installchangelogs -a
 	dh_strip -a --dbg-package=libopus-dbg
