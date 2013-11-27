@@ -1,3 +1,10 @@
+opus (1.1~rc+20131128-1) unstable; urgency=low
+
+  * Fixes the EDSP asm for ARMv5TE.
+  * Uses the actually intended NEON code.
+
+ -- Ron Lee <ron@debian.org>  Thu, 28 Nov 2013 04:30:46 +1030
+
 opus (1.1~rc-1) unstable; urgency=low
 
   * Adds the new packet padding API and OPUS_SET_PREDICTION_DISABLED ctl.
