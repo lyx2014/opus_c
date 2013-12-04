@@ -1,3 +1,11 @@
+opus (1.1~rc+20131204-1) unstable; urgency=low
+
+  * Really 1.1-rc3, except 3 < + to dpkg.
+  * Fixes fixed-point OPUS_SET_GAIN.
+  * Fixes fixed-point stereo regression.
+
+ -- Ron Lee <ron@debian.org>  Wed, 04 Dec 2013 23:16:57 +1030
+
 opus (1.1~rc+20131128-1) unstable; urgency=low
 
   * Fixes the EDSP asm for ARMv5TE.
