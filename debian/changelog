@@ -1,3 +1,10 @@
+opus (1.1-2) unstable; urgency=medium
+
+  * Regenerate build system files, mostly to pull in a later libtool.m4
+    which has fixes for building the ppc64le architecture.  Closes: #751982
+
+ -- Ron Lee <ron@debian.org>  Tue, 26 Aug 2014 19:43:46 +0930
+
 opus (1.1-1) unstable; urgency=low
 
   * Bump to the final 1.1 release version.

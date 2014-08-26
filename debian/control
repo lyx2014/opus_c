@@ -3,7 +3,7 @@ Section: sound
 Priority: optional
 Maintainer: Ron Lee <ron@debian.org>
 Build-Depends: debhelper (>= 5), doxygen
-Standards-Version: 3.9.4.0
+Standards-Version: 3.9.5.0
 Homepage: http://www.opus-codec.org
 Vcs-Git: git://git.debian.org/users/ron/opus.git
 Vcs-Browser: http://git.debian.org/?p=users/ron/opus.git;a=summary
