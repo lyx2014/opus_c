@@ -75,7 +75,6 @@ clean:
 
 $(objdir)/config.status: configure
 	dh_testdir
-	./autogen.sh
 	mkdir -p $(objdir)
 	cd $(objdir) &&	../configure --disable-maintainer-mode		\
 				     --host=$(DEB_HOST_GNU_TYPE)	\

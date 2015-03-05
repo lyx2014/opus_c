@@ -1,9 +1,8 @@
-opus (1.1-2) unstable; urgency=medium
+opus (1.1-2) unstable; urgency=low
 
-  * Regenerate build system files, mostly to pull in a later libtool.m4
-    which has fixes for building the ppc64le architecture.  Closes: #751982
+  * Rebuild for freeswitch repos
 
- -- Ron Lee <ron@debian.org>  Tue, 26 Aug 2014 19:43:46 +0930
+ -- Ken Rice <krice@freeswitch.org>  Thu, 05 Mar 2015 17:54:18 +0000
 
 opus (1.1-1) unstable; urgency=low
 

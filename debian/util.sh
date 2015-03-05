@@ -118,7 +118,7 @@ create_orig () {
       hrev="$(get_nightly_revision_human)"
     fi
     local treeish="$1" dver="$(mk_dver "$uver")"
-    local orig="../$(dsc_source)_$dver.orig.tar.xz"
+    local orig="../$(dsc_source)_$dver.orig.tar.gz"
     [ -n "$treeish" ] || treeish="HEAD"
     check_repo_clean
     git reset --hard "$treeish"
@@ -135,7 +135,7 @@ create_orig () {
       --format=tar \
       --prefix=$(dsc_source)-$uver/ \
       HEAD \
-      | xz -c -${zl}v > $orig
+      | gzip > $orig
     mv .gitattributes.orig .gitattributes
     git reset --hard HEAD^ && git clean -fdx
   } 1>&2
@@ -189,8 +189,8 @@ create_dsc () {
     git add debian/rules
     dch -b -m -v "$dver" --force-distribution -D "$suite" "Nightly build."
     git add debian/changelog && git commit -m "nightly v$orig_ver"
-    dpkg-source -i.* -Zxz -z${zl} -b .
-    dpkg-genchanges -S > ../$(dsc_base)_source.changes
+    dpkg-source -i.* -b .
+    dpkg-genchanges -us -sa -uc -S > ../$(dsc_base)_source.changes
     local dsc="../$(dsc_base).dsc"
     git reset --hard HEAD^ && git clean -fdx
   } 1>&2
@@ -248,14 +248,14 @@ build_debs () {
     local cow_img=/var/cache/pbuilder/base-$distro-$arch.cow
     cow () {
       if ! $use_system_sources; then
-        cowbuilder "$@" \
+        cowbuilder "$@" --debbuildopts '-us -uc -sa' \
           --distribution $distro \
           --architecture $arch \
           --basepath $cow_img
       else
         local keyring="$(mktemp /tmp/keyringXXXXXXXX.asc)"
         apt-key exportall > "$keyring"
-        cowbuilder "$@" \
+        cowbuilder "$@" --debbuildopts '-us -uc -sa' \
           --distribution $distro \
           --architecture $arch \
           --basepath $cow_img \
@@ -403,7 +403,7 @@ commands:
       Choose custom list of modules to build
     -n Nightly build
     -o <orig-file>
-      Specify existing .orig.tar.xz file
+      Specify existing .orig.tar.gz file
     -t Use system /etc/apt/sources.list in build environment
     -u <suite-postfix>
       Specify a custom suite postfix
