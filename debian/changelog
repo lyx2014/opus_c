@@ -1,3 +1,9 @@
+opus (1.1-1~sid+1) unstable; urgency=low
+
+  * Nightly build.
+
+ -- Ken Rice <krice@freeswitch.org>  Thu, 05 Mar 2015 21:06:26 -0600
+
 opus (1.1-2) unstable; urgency=low
 
   * Rebuild for freeswitch repos
