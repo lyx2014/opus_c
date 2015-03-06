@@ -1,3 +1,9 @@
+opus (1.1-1~jessie+1) testing; urgency=low
+
+  * Nightly build.
+
+ -- Ken Rice <krice@freeswitch.org>  Thu, 05 Mar 2015 21:06:27 -0600
+
 opus (1.1-1~sid+1) unstable; urgency=low
 
   * Nightly build.
