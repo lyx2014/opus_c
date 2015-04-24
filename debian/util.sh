@@ -35,8 +35,8 @@ xread () {
   return $ret
 }
 
-mk_dver () { echo "$1" | sed -e 's/-/~/g'; }
-mk_uver () { echo "$1" | sed -e 's/-.*$//' -e 's/~/-/'; }
+mk_dver () { echo "$1"; }
+mk_uver () { echo "$1"; }
 dsc_source () { dpkg-parsechangelog | grep '^Source:' | awk '{print $2}'; }
 dsc_ver () { dpkg-parsechangelog | grep '^Version:' | awk '{print $2}'; }
 up_ver () { mk_uver "$(dsc_ver)"; }
@@ -118,7 +118,7 @@ create_orig () {
       hrev="$(get_nightly_revision_human)"
     fi
     local treeish="$1" dver="$(mk_dver "$uver")"
-    local orig="../$(dsc_source)_$dver.orig.tar.gz"
+    local orig="../$(dsc_source)_$dver.orig.tar.xz"
     [ -n "$treeish" ] || treeish="HEAD"
     check_repo_clean
     git reset --hard "$treeish"
@@ -135,9 +135,9 @@ create_orig () {
       --format=tar \
       --prefix=$(dsc_source)-$uver/ \
       HEAD \
-      | gzip > $orig
+      | xz -c -${zl}v > $orig
     mv .gitattributes.orig .gitattributes
-    git reset --hard HEAD^ && git clean -fdx
+    git reset --hard HEAD~1 && git clean -fdx
   } 1>&2
   echo $orig
 }
@@ -167,32 +167,25 @@ create_dsc () {
     local distro="$(find_distro $1)" orig="$2"
     local suite="$(find_suite $distro)"
     local orig_ver="$(echo "$orig" | sed -e 's/^.*_//' -e 's/\.orig\.tar.*$//')"
-    local dver="${orig_ver}-1~${distro}+1"
+	echo "orig_ver: $orig_ver"
+    local dver="${orig_ver}-${distro}+1"
+	echo "dver: $dver"
     $suite_postfix_p && { suite="${distro}${suite_postfix}"; }
     [ -x "$(which dch)" ] \
       || err "package devscripts isn't installed"
-    if [ -n "$modules_conf" ]; then
-      cp $modules_conf debian/modules.conf
-    fi
-    local bootstrap_args=""
-    if [ -n "$modules_list" ]; then
-      if [ "$modules_list" = "non-dfsg" ]; then
-        bootstrap_args="-mnon-dfsg"
-      else set_modules_${modules_list}; fi
-    fi
-    if test -n "$modules_add"; then
-      for x in $modules_add; do
-        bootstrap_args="$bootstrap_args -p${x}"
-      done
-    fi
     [ "$zl" -ge "1" ] || zl=1
-    git add debian/rules
     dch -b -m -v "$dver" --force-distribution -D "$suite" "Nightly build."
+	echo "WTF!@#!@#1"
     git add debian/changelog && git commit -m "nightly v$orig_ver"
-    dpkg-source -i.* -b .
-    dpkg-genchanges -us -sa -uc -S > ../$(dsc_base)_source.changes
+	echo "WTF!@#!@#2"
+    dpkg-source -i.* -Zxz -z${zl} -b .
+	echo "WTF!@#!@#3"
+    dpkg-genchanges -S > ../$(dsc_base)_source.changes
+	echo "WTF!@#!@#4"
     local dsc="../$(dsc_base).dsc"
+	echo "WTF!@#!@#5"
     git reset --hard HEAD^ && git clean -fdx
+	echo "WTF!@#!@#6"
   } 1>&2
   echo $dsc
 }
@@ -211,26 +204,30 @@ get_sources () {
   while read type path distro components; do
     test "$type" = deb || continue
     printf "$type $path $tgt_distro $components\n"
-  done < /etc/apt/sources.list
+  done < "$2"
 }
 
 get_mirrors () {
-  get_sources "$1" | tr '\n' '|' | head -c-1; echo
+  file=${2-/etc/apt/sources.list}
+  announce "Using apt sources file: $file"
+  get_sources "$1" "$file" | tr '\n' '|' | head -c-1; echo
 }
 
 build_debs () {
   {
     set -e
     local OPTIND OPTARG debug_hook=false hookdir="" cow_build_opts=""
-    local keep_pbuilder_config=false
+    local keep_pbuilder_config=false keyring="" custom_keyring=""
     local use_system_sources=false
-    while getopts 'Bbdkt' o "$@"; do
+    while getopts 'BbdK:kT:t' o "$@"; do
       case "$o" in
         B) cow_build_opts="--debbuildopts '-B'";;
         b) cow_build_opts="--debbuildopts '-b'";;
         d) debug_hook=true;;
         k) keep_pbuilder_config=true;;
-        t) use_system_sources=true;;
+        K) custom_keyring="$OPTARG";;
+        t) use_system_sources=true; custom_sources_file="/etc/apt/sources.list";;
+        T) use_custom_sources=true; custom_sources_file="$OPTARG";;
       esac
     done
     shift $(($OPTIND-1))
@@ -246,22 +243,25 @@ build_debs () {
     [ -x "$(which cowbuilder)" ] \
       || err "package cowbuilder isn't installed"
     local cow_img=/var/cache/pbuilder/base-$distro-$arch.cow
+    if [ -e "$custom_keyring" ]; then
+      keyring="$custom_keyring"
+    else
+      keyring="$(mktemp /tmp/keyringXXXXXXXX.asc)"
+      apt-key exportall > "$keyring"
+    fi
     cow () {
-      if ! $use_system_sources; then
-        cowbuilder "$@" --debbuildopts '-us -uc -sa' \
+      if [[ ! $use_system_sources && ! $use_custom_sources ]]; then
+        cowbuilder "$@" \
           --distribution $distro \
           --architecture $arch \
           --basepath $cow_img
       else
-        local keyring="$(mktemp /tmp/keyringXXXXXXXX.asc)"
-        apt-key exportall > "$keyring"
-        cowbuilder "$@" --debbuildopts '-us -uc -sa' \
+        cowbuilder "$@" \
           --distribution $distro \
           --architecture $arch \
           --basepath $cow_img \
           --keyring "$keyring" \
-          --othermirror "$(get_mirrors $distro)"
-        rm -f $keyring
+          --othermirror "$(get_mirrors $distro $custom_sources_file)"
       fi
     }
     if ! [ -d $cow_img ]; then
@@ -289,6 +289,11 @@ build_debs () {
       --hookdir "$hookdir" \
       --buildresult ../ \
       $cow_build_opts
+
+    if [ ! -e "$custom_keyring" ]; then
+       # Cleanup script created temporary file
+      rm -f $keyring
+    fi
   } 1>&2
   echo ${dsc%.dsc}_${arch}.changes
 }
@@ -307,7 +312,7 @@ build_all () {
   local OPTIND OPTARG
   local orig_opts="" dsc_opts="" deb_opts="" modlist=""
   local archs="" distros="" orig="" depinst=false par=false
-  while getopts 'a:bc:df:ijkl:m:no:p:s:tu:v:z:' o "$@"; do
+  while getopts 'a:bc:df:ijkK:l:m:no:p:s:tT:u:v:z:' o "$@"; do
     case "$o" in
       a) archs="$archs $OPTARG";;
       b) orig_opts="$orig_opts -b";;
@@ -317,10 +322,15 @@ build_all () {
       i) depinst=true;;
       j) par=true;;
       k) deb_opts="$deb_opts -k";;
+      K) deb_opts="$deb_opts -K$OPTARG";;
+      l) modlist="$OPTARG";;
       m) orig_opts="$orig_opts -m$OPTARG"; dsc_opts="$dsc_opts -m$OPTARG";;
       n) orig_opts="$orig_opts -n";;
       o) orig="$OPTARG";;
+      p) dsc_opts="$dsc_opts -p$OPTARG";;
+      s) dsc_opts="$dsc_opts -s$OPTARG";;
       t) deb_opts="$deb_opts -t";;
+      T) deb_opts="$deb_opts -T$OPTARG";;
       u) dsc_opts="$dsc_opts -u$OPTARG";;
       v) orig_opts="$orig_opts -v$OPTARG";;
       z) orig_opts="$orig_opts -z$OPTARG"; dsc_opts="$dsc_opts -z$OPTARG";;
@@ -399,12 +409,22 @@ commands:
     -i Auto install build deps on host system
     -j Build debs in parallel
     -k Don't override pbuilder image configurations
+    -K [/path/to/keyring.asc]
+       Use custom keyring file for sources.list in build environment 
+       in the format of: apt-key exportall > /path/to/file.asc
+    -l <modules>
     -m [ quicktest | non-dfsg ]
       Choose custom list of modules to build
     -n Nightly build
     -o <orig-file>
-      Specify existing .orig.tar.gz file
+      Specify existing .orig.tar.xz file
+    -p <module>
+      Include otherwise avoided module
+    -s [ paranoid | reckless ]
+      Set FS bootstrap/build -j flags
     -t Use system /etc/apt/sources.list in build environment
+    -T [/path/to/sources.list]
+       Use custom /etc/apt/sources.list in build environment
     -u <suite-postfix>
       Specify a custom suite postfix
     -v Set version
@@ -418,7 +438,12 @@ commands:
     -b Binary-only build
     -d Enable cowbuilder debug hook
     -k Don't override pbuilder image configurations
+    -K [/path/to/keyring.asc]
+       Use custom keyring file for sources.list in build environment 
+       in the format of: apt-key exportall > /path/to/file.asc
     -t Use system /etc/apt/sources.list in build environment
+    -T [/path/to/sources.list]
+       Use custom /etc/apt/sources.list in build environment
 
   create-dbg-pkgs
 
