@@ -40,6 +40,7 @@ Static OPUS libraries.
 %patch0 -p1
 
 %build
+./autogen.sh
 %{__libtoolize}
 %{__aclocal}
 %{__autoconf}
