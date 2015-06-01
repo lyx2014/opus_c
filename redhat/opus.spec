@@ -11,6 +11,7 @@ URL:		http://opus-codec.org/
 BuildRequires:	autoconf >= 2.59
 BuildRequires:	automake >= 1.6
 BuildRequires:	libtool
+BuildRequires:	doxygen
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -40,6 +41,7 @@ Static OPUS libraries.
 %patch0 -p1
 
 %build
+./autogen.sh
 %{__libtoolize}
 %{__aclocal}
 %{__autoconf}
@@ -77,8 +79,8 @@ rm -rf $RPM_BUILD_ROOT
 %attr(755,root,root) %{_libdir}/libopus.so
 %{_libdir}/libopus.la
 %{_includedir}/opus
-%{_pkgconfigdir}/opus.pc
-%{_aclocaldir}/opus.m4
+%{_libdir}/pkgconfig/opus.pc
+%{_datadir}/aclocal/opus.m4
 %{_mandir}/man3/opus_*.3*
 
 %files static
